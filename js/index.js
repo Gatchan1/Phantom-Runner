@@ -183,25 +183,25 @@ const player = {
 const obstacles = [
   // obstacle data here:
 
-  { x: 0,   y: 0,   w: 800, h: 32 }, //1 (todo el lado superior)
-  { x: 220, y: 0,   w: 40,  h: 88 }, //2
-  { x: 220, y: 120, w: 40,  h: 149}, //4
+  { x: 0, y: 0, w: 800, h: 32 }, //1 (todo el lado superior)
+  { x: 220, y: 0, w: 40, h: 88 }, //2
+  { x: 220, y: 120, w: 40, h: 149 }, //4
   { x: 260, y: 160, w: 160, h: 48 }, //5
   { x: 440, y: 160, w: 160, h: 48 }, //6
-  { x: 560, y: 208, w: 40,  h: 50 }, //7
+  { x: 560, y: 208, w: 40, h: 50 }, //7
   { x: 600, y: 180, w: 100, h: 44 }, //8
-  { x: 720, y: 180, w: 80,  h: 44 }, //9
-  { x: 0,   y: 380, w: 80,  h: 52 }, //10
+  { x: 720, y: 180, w: 80, h: 44 }, //9
+  { x: 0, y: 380, w: 80, h: 52 }, //10
   { x: 100, y: 380, w: 160, h: 52 }, //11
-  { x: 220, y: 300, w: 40,  h: 80 }, //12
-  { x: 240, y: 400, w: 80,  h: 48 }, //13
+  { x: 220, y: 300, w: 40, h: 80 }, //12
+  { x: 240, y: 400, w: 80, h: 48 }, //13
   { x: 340, y: 400, w: 160, h: 48 }, //14
-  { x: 520, y: 400, w: 80,  h: 48 }, //15
-  { x: 560, y: 300, w: 40,  h: 100}, //16
+  { x: 520, y: 400, w: 80, h: 48 }, //15
+  { x: 560, y: 300, w: 40, h: 100 }, //16
   { x: 580, y: 420, w: 180, h: 44 }, //17
-  { x: 780, y: 420, w: 20,  h: 44 }, //18
-  { x: 400, y: 448, w: 40,  h: 48 }, //19
-  { x: 400, y: 540, w: 40,  h: 60 }, //20
+  { x: 780, y: 420, w: 20, h: 44 }, //18
+  { x: 400, y: 448, w: 40, h: 48 }, //19
+  { x: 400, y: 540, w: 40, h: 60 }, //20
 ];
 
 //     {x: 0,   y: 0,   w: 220, h: 40},  //1
@@ -250,65 +250,87 @@ function canMoveTo(newX, newY, playerWidth, playerHeight) {
 let ghosts = [];
 
 class Ghost {
-    constructor() {
-      this.x = 200;
-      this.y = 200;
-      this.w = 18;
-      this.h = 23;
-      this.speedX = 2; // horizontal movement speed
-      this.speedY = 1; // vertical movement speed
-    }
-  
-    print() {
-      // Update ghost position based on its speed
-      this.x += this.speedX;
-      this.y += this.speedY;
-      // Draw ghost image at new position
-      ctxB.drawImage(ghostSprite, this.x, this.y, this.w, this.h);
-    }
+  constructor() {
+    this.x = 200;
+    this.y = 200;
+    this.w = 18;
+    this.h = 23;
+    this.speedX = 2; // horizontal movement speed
+    this.speedY = 1; // vertical movement speed
   }
-  class GhostTop extends Ghost {
-    constructor() {
-      super();
-      this.x = Math.random() * 800;
-      this.y = 0;
-    }
+  print() {
+    // Update ghost position based on its speed
+    this.x += this.speedX;
+    this.y += this.speedY;
+    // Draw ghost image at new position
+    ctxB.drawImage(ghostSprite, this.x, this.y, this.w, this.h);
   }
-  class GhostLeft extends Ghost {
-    constructor() {
-      super();
-      this.x = 0;
-      this.y = Math.random() * 600;
-      this.speedX = 2;
-      this.speedY = -1;
-    }
-  }
-  class GhostRight extends Ghost {
-    constructor() {
-      super();
-      this.x = 800;
-      this.y = Math.random() * 600;
-      this.speedX = -2;
-      this.speedY = 1;
-    }
-  }
-  class GhostBottom extends Ghost {
-    constructor() {
-      super();
-      this.x = Math.random() * 800;
-      this.y = 600;
-      this.speedX = -2;
-      this.speedY = -1;
-    }
-  }
-  //initial ghosts
-  for (let i = 0; i < 3; i++) {
-      ghosts.push(new GhostTop());
-      ghosts.push(new GhostRight());
-      ghosts.push(new GhostBottom());
-      ghosts.push(new GhostLeft());
-    }
+}
 
+class GhostTop extends Ghost {
+  constructor() {
+    super();
+    this.x = Math.random() * 800;
+    this.y = 0;
+  }
+}
+class GhostLeft extends Ghost {
+  constructor() {
+    super();
+    this.x = 0;
+    this.y = Math.random() * 600;
+    this.speedX = 2;
+    this.speedY = -1;
+  }
+}
+class GhostRight extends Ghost {
+  constructor() {
+    super();
+    this.x = 800;
+    this.y = Math.random() * 600;
+    this.speedX = -2;
+    this.speedY = 1;
+  }
+}
+class GhostBottom extends Ghost {
+  constructor() {
+    super();
+    this.x = Math.random() * 800;
+    this.y = 600;
+    this.speedX = -2;
+    this.speedY = -1;
+  }
+}
+class GhostLeftMidway extends Ghost {
+  constructor() {
+    super();
+    this.x = 160;
+    this.y = Math.random() * 600;
+    this.speedX = 2;
+    this.speedY = -1;
+  }
+}
+class GhostRightMidway extends Ghost {
+  constructor() {
+    super();
+    this.x = 640;
+    this.y = Math.random() * 600;
+    this.speedX = -2;
+    this.speedY = 1;
+  }
+}
+//initial ghosts
+for (let i = 0; i < 3; i++) {
+  ghosts.push(new GhostTop());
+  ghosts.push(new GhostRight());
+  ghosts.push(new GhostBottom());
+  ghosts.push(new GhostLeft());
+  ghosts.push(new GhostRightMidway());
+  ghosts.push(new GhostLeftMidway());
+}
+
+///////////////////////////////
+/////////// INTERVAL //////////
 let countUpdate = 0;
 const update = function () {
   countUpdate++;
@@ -357,24 +379,77 @@ const update = function () {
 
   player.checkGhostCollision();
   checkExitCollision();
+
+  if (cheatString == "billy") {
+    gradient.src = "";
+  }
+
+  if (gradientBack == "1234") {
+    gradient.src = "images/LAYER2.png";
+  }
 };
+///////////////////////////////
+///////////////////////////////
 
 let intervalId = null;
-let start = function startGame() {
-  intervalId = setInterval(update, 60);
+
+let hasStarted = false;
+let start = function () {
+  if (!hasStarted) {
+    hasStarted = true;
+    intervalId = setInterval(update, 60);
+  }
 };
 
 function gameOver() {
   ctxB.drawImage(gameOverImg, 50, 105, 700, 445);
   clearInterval(intervalId);
+  hasStarted = false;
+  player.x = 401;
+  player.y = 290;
+  player.w = 18;
+  player.h = 23;
+  // arcX = 410;
+  // arcY = 310;
+  player.gradX = -393; //355;
+  player.gradY = -295; //255;
+  player.countGhostCollisions = 0;
+  player.direction = "standingDown";
+  ghosts = [];
+  for (let i = 0; i < 3; i++) {
+    ghosts.push(new GhostTop());
+    ghosts.push(new GhostRight());
+    ghosts.push(new GhostBottom());
+    ghosts.push(new GhostLeft());
+    ghosts.push(new GhostRightMidway());
+    ghosts.push(new GhostLeftMidway());
+  }  
 }
 
 function gameWin() {
   ctxB.drawImage(gameWinImg, 100, 0, 600, 600);
   clearInterval(intervalId);
+  hasStarted = false;
+  player.x = 401;
+  player.y = 290;
+  player.w = 18;
+  player.h = 23;
+  // arcX = 410;
+  // arcY = 310;
+  player.gradX = -393; //355;
+  player.gradY = -295; //255;
+  player.countGhostCollisions = 0;
+  player.direction = "standingDown";
+  ghosts = [];
+  for (let i = 0; i < 3; i++) {
+    ghosts.push(new GhostTop());
+    ghosts.push(new GhostRight());
+    ghosts.push(new GhostBottom());
+    ghosts.push(new GhostLeft());
+    ghosts.push(new GhostRightMidway());
+    ghosts.push(new GhostLeftMidway());
+  }  
 }
-
-
 
 let timeoutIdUp;
 let timeoutIdRight;
@@ -382,38 +457,37 @@ let timeoutIdDown;
 let timeoutIdLeft;
 let iWalk = 0;
 
+function clearAllDirectionTimeoutIds() {
+    clearTimeout(timeoutIdUp);
+    clearTimeout(timeoutIdRight);
+    clearTimeout(timeoutIdDown);
+    clearTimeout(timeoutIdLeft);
+}
+
 document.body.addEventListener("keydown", (e) => {
   if (e.key == "ArrowUp" || e.key == "w" || e.key == "W") {
     player.recalculatePosition(0, -20);
     player.direction = "up";
     iWalk++;
-    clearTimeout(timeoutIdUp), clearTimeout(timeoutIdRight);
-    clearTimeout(timeoutIdDown);
-    clearTimeout(timeoutIdLeft);
+    clearAllDirectionTimeoutIds()
   }
   if (e.key == "ArrowDown" || e.key == "s" || e.key == "S") {
     player.recalculatePosition(0, 20);
     player.direction = "down";
     iWalk++;
-    clearTimeout(timeoutIdUp), clearTimeout(timeoutIdRight);
-    clearTimeout(timeoutIdDown);
-    clearTimeout(timeoutIdLeft);
+    clearAllDirectionTimeoutIds()
   }
   if (e.key == "ArrowLeft" || e.key == "a" || e.key == "A") {
     player.recalculatePosition(-20, 0);
     player.direction = "left";
     iWalk++;
-    clearTimeout(timeoutIdUp), clearTimeout(timeoutIdRight);
-    clearTimeout(timeoutIdDown);
-    clearTimeout(timeoutIdLeft);
+    clearAllDirectionTimeoutIds()
   }
   if (e.key == "ArrowRight" || e.key == "d" || e.key == "D") {
     player.recalculatePosition(20, 0);
     player.direction = "right";
     iWalk++;
-    clearTimeout(timeoutIdUp), clearTimeout(timeoutIdRight);
-    clearTimeout(timeoutIdDown);
-    clearTimeout(timeoutIdLeft);
+    clearAllDirectionTimeoutIds()
   }
 });
 
@@ -565,3 +639,35 @@ function checkExitCollision() {
     gameWin();
   }
 }
+
+// CHEAT CODES
+let cheatString = "";
+document.body.addEventListener("keydown", (e) => {
+  if (e.key == "b" || e.key == "B") {
+    cheatString += "b";
+  } else if (e.key == "i" || e.key == "I") {
+    cheatString += "i";
+  } else if (e.key == "l" || e.key == "L") {
+    cheatString += "l";
+  } else if (e.key == "y" || e.key == "Y") {
+    cheatString += "y";
+    // console.log("cheatString", cheatString)
+  } else {
+    cheatString = "";
+  }
+});
+
+let gradientBack = "";
+document.body.addEventListener("keydown", (e) => {
+  if (e.key == "1") {
+    gradientBack += "1";
+  } else if (e.key == "2") {
+    gradientBack += "2";
+  } else if (e.key == "3") {
+    gradientBack += "3";
+  } else if (e.key == "4") {
+    gradientBack += "4";
+  } else {
+    gradientBack = "";
+  }
+});
