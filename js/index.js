@@ -368,7 +368,7 @@ const update = function () {
   //REDRAW
   ctxB.drawImage(background, 0, 0, 800, 600);
 
-  door.print();
+  drawDoor();
 
   player.print();
   ghosts.forEach((ghost) => {
@@ -398,6 +398,29 @@ let start = function () {
   if (!hasStarted) {
     hasStarted = true;
     intervalId = setInterval(update, 60);
+    player.x = 401;
+    player.y = 290;
+    player.w = 18;
+    player.h = 23;
+    // arcX = 410;
+    // arcY = 310;
+    player.gradX = -393; //355;
+    player.gradY = -295; //255;
+    player.countGhostCollisions = 0;
+    player.direction = "standingDown";
+    ghosts = [];
+    for (let i = 0; i < 3; i++) {
+      ghosts.push(new GhostTop());
+      ghosts.push(new GhostRight());
+      ghosts.push(new GhostBottom());
+      ghosts.push(new GhostLeft());
+      ghosts.push(new GhostRightMidway());
+      ghosts.push(new GhostLeftMidway());
+    }
+    chooseLimitDirection();
+    chooseDoorPosition();
+    console.log("limitDirection", limitDirection);
+    console.log("doorX and doorY:", door.x, door.y);
   }
 };
 
@@ -405,50 +428,12 @@ function gameOver() {
   ctxB.drawImage(gameOverImg, 50, 105, 700, 445);
   clearInterval(intervalId);
   hasStarted = false;
-  player.x = 401;
-  player.y = 290;
-  player.w = 18;
-  player.h = 23;
-  // arcX = 410;
-  // arcY = 310;
-  player.gradX = -393; //355;
-  player.gradY = -295; //255;
-  player.countGhostCollisions = 0;
-  player.direction = "standingDown";
-  ghosts = [];
-  for (let i = 0; i < 3; i++) {
-    ghosts.push(new GhostTop());
-    ghosts.push(new GhostRight());
-    ghosts.push(new GhostBottom());
-    ghosts.push(new GhostLeft());
-    ghosts.push(new GhostRightMidway());
-    ghosts.push(new GhostLeftMidway());
-  }  
 }
 
 function gameWin() {
   ctxB.drawImage(gameWinImg, 100, 0, 600, 600);
   clearInterval(intervalId);
   hasStarted = false;
-  player.x = 401;
-  player.y = 290;
-  player.w = 18;
-  player.h = 23;
-  // arcX = 410;
-  // arcY = 310;
-  player.gradX = -393; //355;
-  player.gradY = -295; //255;
-  player.countGhostCollisions = 0;
-  player.direction = "standingDown";
-  ghosts = [];
-  for (let i = 0; i < 3; i++) {
-    ghosts.push(new GhostTop());
-    ghosts.push(new GhostRight());
-    ghosts.push(new GhostBottom());
-    ghosts.push(new GhostLeft());
-    ghosts.push(new GhostRightMidway());
-    ghosts.push(new GhostLeftMidway());
-  }  
 }
 
 let timeoutIdUp;
@@ -458,10 +443,10 @@ let timeoutIdLeft;
 let iWalk = 0;
 
 function clearAllDirectionTimeoutIds() {
-    clearTimeout(timeoutIdUp);
-    clearTimeout(timeoutIdRight);
-    clearTimeout(timeoutIdDown);
-    clearTimeout(timeoutIdLeft);
+  clearTimeout(timeoutIdUp);
+  clearTimeout(timeoutIdRight);
+  clearTimeout(timeoutIdDown);
+  clearTimeout(timeoutIdLeft);
 }
 
 document.body.addEventListener("keydown", (e) => {
@@ -469,25 +454,25 @@ document.body.addEventListener("keydown", (e) => {
     player.recalculatePosition(0, -20);
     player.direction = "up";
     iWalk++;
-    clearAllDirectionTimeoutIds()
+    clearAllDirectionTimeoutIds();
   }
   if (e.key == "ArrowDown" || e.key == "s" || e.key == "S") {
     player.recalculatePosition(0, 20);
     player.direction = "down";
     iWalk++;
-    clearAllDirectionTimeoutIds()
+    clearAllDirectionTimeoutIds();
   }
   if (e.key == "ArrowLeft" || e.key == "a" || e.key == "A") {
     player.recalculatePosition(-20, 0);
     player.direction = "left";
     iWalk++;
-    clearAllDirectionTimeoutIds()
+    clearAllDirectionTimeoutIds();
   }
   if (e.key == "ArrowRight" || e.key == "d" || e.key == "D") {
     player.recalculatePosition(20, 0);
     player.direction = "right";
     iWalk++;
-    clearAllDirectionTimeoutIds()
+    clearAllDirectionTimeoutIds();
   }
 });
 
@@ -517,66 +502,110 @@ document.body.addEventListener("keyup", (e) => {
 document.getElementById("play-button").addEventListener("click", start);
 
 // Define the rectangles with their respective coordinates
-const limites = [
-  { x: -20, y: 48, w: 4, h: 320 }, // 0 -20 x izq
-  { x: -20, y: 448, w: 4, h: 88 }, // 0-20 x izq
-  { x: 16, y: 572, w: 368, h: 8 }, // 592 -20 y  abajo
-  { x: 448, y: 572, w: 336, h: 8 }, // 592 -20 y      abajo
-  { x: 771, y: 64, w: 4, h: 96 }, // 776 - 10 x  derch
-  { x: 771, y: 256, w: 4, h: 144 }, // 776-10 x derech
-  { x: 771, y: 496, w: 4, h: 80 }, // 776-10 x derech
-  { x: 16, y: 15, w: 172, h: 32 }, // 0 -10 y arriba  192 -20w
-  { x: 232, y: 15, w: 492, h: 32 }, // 0 -10 w y arriba     512 -20w
+const limitUp = [
+  { x: 16, y: 15, w: 172, h: 32 }, // 0-10 y up  192 -20w
+  { x: 232, y: 15, w: 492, h: 32 }, // 0-10 w y up  512 -20w
 ];
+const limitRight = [
+  { x: 771, y: 64, w: 4, h: 96 }, // 776-10 x  right
+  { x: 771, y: 256, w: 4, h: 144 }, // 776-10 x right
+  { x: 771, y: 496, w: 4, h: 80 }, // 776-10 x right
+];
+const limitLeft = [
+  { x: -20, y: 48, w: 4, h: 320 }, // 0-20 x left
+  { x: -20, y: 448, w: 4, h: 88 }, // 0-20 x left
+];
+const limitDown = [
+  { x: 16, y: 572, w: 368, h: 8 }, // 592-20 y  down
+  { x: 448, y: 572, w: 336, h: 8 }, // 592-20 y down
+];
+
+// sum up border pixels: 172+492= 664; 664/8 = 83; accumulated = 83
+// sum right border pixels: 320; 320/8 = 40; accumulated = 83+40 = 123
+// sum left border pixels: 408; 408/8 = 51; accumulated = 51+123 = 174
+// sum down border pixels: 704; 704/8 = 88; accumulated = 88+174 = 262
+
+let limitDirection;
+function chooseLimitDirection() {
+  const chancesAccordingToLimitSize = Math.floor(Math.random() * 262);
+  if (chancesAccordingToLimitSize < 83) {
+    limitDirection = "up";
+    return;
+  } else if (chancesAccordingToLimitSize < 123) {
+    limitDirection = "right";
+    return;
+  } else if (chancesAccordingToLimitSize < 174) {
+    limitDirection = "left";
+    return;
+  } else if (chancesAccordingToLimitSize < 262) {
+    limitDirection = "down";
+    return;
+  }
+}
 
 // Function to generate a random number within a range
 function getRandom(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+const door = { w: 40, h: 40 };
+let doorPosition;
+let possibilities = [];
+let drawDoor;
+
+// Generic function to determine possible places for a door to be, within one limit of the canvas.
+function chooseLimit(possibilitiesArray, direction) {
+  possibilitiesArray = [];
+  for (let i = 0; i < direction.length; i++) {
+    const fragment = direction[i];
+    const randomX = getRandom(fragment.x, fragment.x + fragment.w);
+    const randomY = getRandom(fragment.y, fragment.y + fragment.h);
+    possibilitiesArray.push({ randomX, randomY });
+  }
+  doorPosition = possibilitiesArray[Math.floor(Math.random() * possibilitiesArray.length)];
+  console.log("doorPosition:", doorPosition);
+  door.x = doorPosition.randomX;
+  door.y = doorPosition.randomY;
+}
+
+function chooseDoorPosition() {
+  if (limitDirection == "up") {
+    chooseLimit(possibilities, limitUp);
+    door.h = 42;
+    drawDoor = () => ctxB.drawImage(exitDoorUp, door.x, door.y, door.w, door.h);
+  } else if (limitDirection == "right") {
+    chooseLimit(possibilities, limitRight);
+    drawDoor = () => ctxB.drawImage(exitDoorRight, door.x, door.y, door.w, door.h);
+  } else if (limitDirection == "down") {
+    chooseLimit(possibilities, limitDown);
+    drawDoor = () => ctxB.drawImage(exitDoorDown, door.x, door.y, door.w, door.h);
+  } else if (limitDirection == "left") {
+    chooseLimit(possibilities, limitLeft);
+    drawDoor = () => ctxB.drawImage(exitDoorLeft, door.x, door.y, door.w, door.h);
+  }
+}
+
 // Loop through each rectangle and generate a random x and y within its bounds
 
-let randomPos = [];
+// let randomPos = [];
 
-for (let i = 0; i < limites.length; i++) {
-  const limit = limites[i];
-  const randomX = getRandom(limit.x, limit.x + limit.w);
-  const randomY = getRandom(limit.y, limit.y + limit.h);
+// for (let i = 0; i < limit.length; i++) {
+//   const lim = limit[i];
+//   const randomX = getRandom(lim.x, lim.x + lim.w);
+//   const randomY = getRandom(lim.y, lim.y + lim.h);
 
-  // console.log(`Rectangle ${i}: limite X:(${limit.x} entre ${limit.x + limit.w}) con Random point: X:${randomX}`)
-  // console.log(`Rectangle ${i}: limite Y:(${limit.y} entre ${limit.y + limit.h}) con Random point: Y:${randomY}`)
+//   // console.log(`Rectangle ${i}: limite X:(${limit.x} entre ${limit.x + limit.w}) con Random point: X:${randomX}`)
+//   // console.log(`Rectangle ${i}: limite Y:(${limit.y} entre ${limit.y + limit.h}) con Random point: Y:${randomY}`)
 
-  randomPos.push({ randomX, randomY });
-}
-//console.log(randomPos)
-
-// const salida = {
-
-//     izquierda : [
-//                 { x: -20,     y:randomPos[0].randomY,     w: 40,       h: 40 },
-//                 { x: -20,     y:randomPos[1].randomY,     w: 40,       h: 40 },
-//                 ],
-//     abajo :     [
-//                 { x: randomPos[2].randomX,    y: 572,   w: 40,       h: 40 },
-//                 { x: randomPos[3].randomX,    y: 572,   w: 40,       h: 40 },
-//                 ],
-//     derecha :   [
-//                 { x: 771,                     y: randomPos[4].randomY,    w: 40,       h: 40 },
-//                 { x: 771,                     y: randomPos[5].randomY,    w: 40,       h: 40 },
-//                 { x: 771,                     y: randomPos[6].randomY,    w: 40,       h: 40 },
-//                 ],
-//     arriba:     [
-//                 { x: randomPos[7].randomX,    y: -10,                       w: 40,       h: 40 },
-//                 { x: randomPos[8].randomX,    y: -10,                       w: 40,       h: 40 },
-//                 ],
+//   randomPos.push({ randomX, randomY });
 // }
 
-const salida = [
-  ["izquierda", { x: -20, y: randomPos[0].randomY, w: 40, h: 40 }, { x: -20, y: randomPos[1].randomY, w: 40, h: 40 }],
-  ["abajo", { x: randomPos[2].randomX, y: 572, w: 40, h: 40 }, { x: randomPos[3].randomX, y: 572, w: 40, h: 40 }],
-  ["derecha", { x: 771, y: randomPos[4].randomY, w: 40, h: 40 }, { x: 771, y: randomPos[5].randomY, w: 40, h: 40 }, { x: 771, y: randomPos[6].randomY, w: 40, h: 40 }],
-  ["arriba", { x: randomPos[7].randomX, y: 15, w: 40, h: 40 }, { x: randomPos[8].randomX, y: 15, w: 40, h: 40 }],
-];
+// const salida = [
+//   ["izquierda", { x: -20, y: randomPos[0].randomY, w: 40, h: 40 }, { x: -20, y: randomPos[1].randomY, w: 40, h: 40 }],
+//   ["abajo", { x: randomPos[2].randomX, y: 572, w: 40, h: 40 }, { x: randomPos[3].randomX, y: 572, w: 40, h: 40 }],
+//   ["derecha", { x: 771, y: randomPos[4].randomY, w: 40, h: 40 }, { x: 771, y: randomPos[5].randomY, w: 40, h: 40 }, { x: 771, y: randomPos[6].randomY, w: 40, h: 40 }],
+//   ["arriba", { x: randomPos[7].randomX, y: 15, w: 40, h: 40 }, { x: randomPos[8].randomX, y: 15, w: 40, h: 40 }],
+// ];
 
 // console.log(salida[2][1]);
 
@@ -592,50 +621,50 @@ const salida = [
 // }
 // console.log(exit);
 
-const exit = [];
-function salidaRand(salida) {
-  for (let i = 0; i < salida.length; i++) {
-    const exitIndex = getRandom(1, salida[i].length - 1);
-    exit.push(salida[i][exitIndex]);
-  }
-  return exit;
-}
+// const exit = [];
+// function salidaRand(salida) {
+//   for (let i = 0; i < salida.length; i++) {
+//     const exitIndex = getRandom(1, salida[i].length - 1);
+//     exit.push(salida[i][exitIndex]);
+//   }
+//   return exit;
+// }
 
-const fourExits = salidaRand(salida);
-console.log(fourExits);
+// const fourExits = salidaRand(salida);
+// console.log(fourExits);
 
-const exitRandom = fourExits[Math.floor(Math.random() * 4)];
+// const exitRandom = fourExits[Math.floor(Math.random() * 4)];
 
-console.log(exitRandom);
+// console.log(exitRandom);
 
-const door = {
-  x: exitRandom.x,
-  y: exitRandom.y,
+// const door = {
+//   x: exitRandom.x,
+//   y: exitRandom.y,
 
-  print: function () {
-    if (exitRandom === fourExits[0]) {
-      //izquierda
-      ctxB.drawImage(exitDoorLeft, this.x, this.y, 40, 40);
-    }
-    if (exitRandom === fourExits[1]) {
-      //abajo
-      ctxB.drawImage(exitDoorDown, this.x, this.y, 40, 40);
-    }
-    if (exitRandom === fourExits[2]) {
-      // derecha
-      ctxB.drawImage(exitDoorRight, this.x, this.y, 40, 40);
-    }
-    if (exitRandom === fourExits[3]) {
-      //arriba
-      ctxB.drawImage(exitDoorUp, this.x, this.y, 40, 42);
-    }
-  },
-};
+//   print: function () {
+//     if (exitRandom === fourExits[0]) {
+//       //izquierda
+//       ctxB.drawImage(exitDoorLeft, this.x, this.y, 40, 40);
+//     }
+//     if (exitRandom === fourExits[1]) {
+//       //abajo
+//       ctxB.drawImage(exitDoorDown, this.x, this.y, 40, 40);
+//     }
+//     if (exitRandom === fourExits[2]) {
+//       // derecha
+//       ctxB.drawImage(exitDoorRight, this.x, this.y, 40, 40);
+//     }
+//     if (exitRandom === fourExits[3]) {
+//       //arriba
+//       ctxB.drawImage(exitDoorUp, this.x, this.y, 40, 42);
+//     }
+//   },
+// };
 
-console.log("he aqui la puerta", door);
+// console.log("he aqui la puerta", door);
 
 function checkExitCollision() {
-  if (isColliding(player, exitRandom)) {
+  if (isColliding(player, door)) {
     gameWin();
   }
 }
