@@ -204,28 +204,6 @@ const obstacles = [
   { x: 400, y: 540, w: 40, h: 60 }, //20
 ];
 
-//     {x: 0,   y: 0,   w: 220, h: 40},  //1
-//     {x: 220, y: 0,   w: 40,  h: 88},  //2
-//     {x: 260, y: 0,   w: 540, h: 40},  //3
-//     {x: 220, y: 120, w: 40,  h: 149}, //4
-//     {x: 260, y: 160, w: 160, h: 60},  //5
-//     {x: 440, y: 160, w: 160, h: 60},  //6
-//     {x: 560, y: 220, w: 40,  h: 50},  //7 **
-//     {x: 600, y: 180, w: 100, h: 60},  //8
-//     {x: 720, y: 180, w: 80,  h: 60},  //9
-//     {x: 0,   y: 380, w: 80,  h: 60},  //10
-//     {x: 100, y: 380, w: 160, h: 60},  //11
-//     {x: 220, y: 300, w: 40,  h: 80},  //12
-//     {x: 240, y: 400, w: 80,  h: 60},  //13
-//     {x: 340, y: 400, w: 160, h: 60},  //14
-//     {x: 520, y: 400, w: 80,  h: 60},  //15
-//     {x: 560, y: 300, w: 40,  h: 100}, //16
-//     {x: 580, y: 420, w: 180, h: 60},  //17
-//     {x: 780, y: 420, w: 20,  h: 60},  //18
-//     {x: 400, y: 460, w: 40,  h: 48},  //19
-//     {x: 400, y: 540, w: 40,  h: 60},  //20
-//   ];
-
 function isColliding(rect1, rect2) {
   return rect1.x < rect2.x + rect2.w && rect1.x + rect1.w > rect2.x && rect1.y < rect2.y + rect2.h && rect1.y + rect1.h > rect2.y;
 }
@@ -417,12 +395,14 @@ let start = function () {
       ghosts.push(new GhostRightMidway());
       ghosts.push(new GhostLeftMidway());
     }
-    chooseLimitDirection();
+    chooseBorderDirection();
     chooseDoorPosition();
-    console.log("limitDirection", limitDirection);
+    console.log("borderDirection", borderDirection);
     console.log("doorX and doorY:", door.x, door.y);
   }
 };
+
+document.getElementById("play-button").addEventListener("click", start);
 
 function gameOver() {
   ctxB.drawImage(gameOverImg, 50, 105, 700, 445);
@@ -436,6 +416,7 @@ function gameWin() {
   hasStarted = false;
 }
 
+//////////// MOVEMENT ////////////
 let timeoutIdUp;
 let timeoutIdRight;
 let timeoutIdDown;
@@ -499,46 +480,50 @@ document.body.addEventListener("keyup", (e) => {
   }
 });
 
-document.getElementById("play-button").addEventListener("click", start);
 
+//////////// RANDOMLY PLACED EXIT ///////////
 // Define the rectangles with their respective coordinates
-const limitUp = [
-  { x: 16, y: 15, w: 172, h: 32 }, // 0-10 y up  192 -20w
-  { x: 232, y: 15, w: 492, h: 32 }, // 0-10 w y up  512 -20w
+const borderUp = [ // y = 15
+  { initX: 6, endX: 180}, 
+  { initX: 259, endX: 755},
 ];
-const limitRight = [
-  { x: 771, y: 64, w: 4, h: 96 }, // 776-10 x  right
-  { x: 771, y: 256, w: 4, h: 144 }, // 776-10 x right
-  { x: 771, y: 496, w: 4, h: 80 }, // 776-10 x right
+const borderRight = [ // x = 771
+  { initY: 30, endY: 145 },
+  { initY: 226, endY: 390 },
+  { initY: 476, endY: 560 },
 ];
-const limitLeft = [
-  { x: -20, y: 48, w: 4, h: 320 }, // 0-20 x left
-  { x: -20, y: 448, w: 4, h: 88 }, // 0-20 x left
+const borderDown = [ // y = 572
+  { initX: 6, endX: 370 },
+  { initX: 432, endX: 765 },
 ];
-const limitDown = [
-  { x: 16, y: 572, w: 368, h: 8 }, // 592-20 y  down
-  { x: 448, y: 572, w: 336, h: 8 }, // 592-20 y down
+const borderLeft = [ // x = -15
+  { initY: 30, endY: 348 },
+  { initY: 428, endY: 560 },
 ];
 
-// sum up border pixels: 172+492= 664; 664/8 = 83; accumulated = 83
-// sum right border pixels: 320; 320/8 = 40; accumulated = 83+40 = 123
-// sum left border pixels: 408; 408/8 = 51; accumulated = 51+123 = 174
-// sum down border pixels: 704; 704/8 = 88; accumulated = 88+174 = 262
+// I want the chance of the door being in one border of the canvas proportional to the available space in pixels.
+// First I sum the pixels each border has available:
 
-let limitDirection;
-function chooseLimitDirection() {
-  const chancesAccordingToLimitSize = Math.floor(Math.random() * 262);
-  if (chancesAccordingToLimitSize < 83) {
-    limitDirection = "up";
+// console.log("sum upper border pixels: ", (borderUp[0].endX - borderUp[0].initX) + (borderUp[1].endX - borderUp[1].initX)) // 670
+// console.log("sum right border pixels: ", (borderRight[0].endY - borderRight[0].initY) + (borderRight[1].endY - borderRight[1].initY) + (borderRight[2].endY - borderRight[2].initY)) // 363 + 670 = 1033
+// console.log("sum bottom border pixels: ", (borderDown[0].endX - borderDown[0].initX) + (borderDown[1].endX - borderDown[1].initX)) // 697 + 1033 = 1730
+// console.log("sum left border pixels: ", (borderLeft[0].endY - borderLeft[0].initY) + (borderLeft[1].endY - borderLeft[1].initY)) // 450 + 1730 = 2180
+
+// Randomly determine the direction where the door will be set, taking into account the available space in pixels:
+let borderDirection;
+function chooseBorderDirection() {
+  const chancesAccordingToBorderSize = Math.floor(Math.random() * 2180);
+  if (chancesAccordingToBorderSize < 670) {
+    borderDirection = "up";
     return;
-  } else if (chancesAccordingToLimitSize < 123) {
-    limitDirection = "right";
+  } else if (chancesAccordingToBorderSize < 1033) {
+    borderDirection = "right";
     return;
-  } else if (chancesAccordingToLimitSize < 174) {
-    limitDirection = "left";
+  } else if (chancesAccordingToBorderSize < 1730) {
+    borderDirection = "down";
     return;
-  } else if (chancesAccordingToLimitSize < 262) {
-    limitDirection = "down";
+  } else if (chancesAccordingToBorderSize < 2180) {
+    borderDirection = "left";
     return;
   }
 }
@@ -549,125 +534,62 @@ function getRandom(min, max) {
 }
 
 const door = { w: 40, h: 40 };
-let doorPosition;
+let narrowToOneDoor;
 let possibilities = [];
 let drawDoor;
 
-// Generic function to determine possible places for a door to be, within one limit of the canvas.
-function chooseLimit(possibilitiesArray, direction) {
+// Generic function to determine possible places for a door to be, within one border of the canvas.
+function chooseBorder(possibilitiesArray, direction) {
   possibilitiesArray = [];
   for (let i = 0; i < direction.length; i++) {
     const fragment = direction[i];
-    const randomX = getRandom(fragment.x, fragment.x + fragment.w);
-    const randomY = getRandom(fragment.y, fragment.y + fragment.h);
+    let randomX
+    let randomY
+    // If it's a horizontal border:
+    if (fragment.initX) {
+      randomX = getRandom(fragment.initX, fragment.endX);
+    }
+    // If it's a vertical border:
+    if (fragment.initY) {
+      randomY = getRandom(fragment.initY, fragment.endY);
+    }
     possibilitiesArray.push({ randomX, randomY });
   }
-  doorPosition = possibilitiesArray[Math.floor(Math.random() * possibilitiesArray.length)];
-  console.log("doorPosition:", doorPosition);
-  door.x = doorPosition.randomX;
-  door.y = doorPosition.randomY;
+  narrowToOneDoor = possibilitiesArray[Math.floor(Math.random() * possibilitiesArray.length)];
+  console.log("doorPosition:", narrowToOneDoor);
+  if (narrowToOneDoor.randomX) {door.x = narrowToOneDoor.randomX};
+  if (narrowToOneDoor.randomY) {door.y = narrowToOneDoor.randomY};
+  console.log("door:", door);
 }
 
 function chooseDoorPosition() {
-  if (limitDirection == "up") {
-    chooseLimit(possibilities, limitUp);
+  if (borderDirection == "up") {
+    chooseBorder(possibilities, borderUp);
     door.h = 42;
+    door.y = 15
     drawDoor = () => ctxB.drawImage(exitDoorUp, door.x, door.y, door.w, door.h);
-  } else if (limitDirection == "right") {
-    chooseLimit(possibilities, limitRight);
+  } else if (borderDirection == "right") {
+    chooseBorder(possibilities, borderRight);
+    door.x = 771
     drawDoor = () => ctxB.drawImage(exitDoorRight, door.x, door.y, door.w, door.h);
-  } else if (limitDirection == "down") {
-    chooseLimit(possibilities, limitDown);
+  } else if (borderDirection == "down") {
+    chooseBorder(possibilities, borderDown);
+    door.y = 572
     drawDoor = () => ctxB.drawImage(exitDoorDown, door.x, door.y, door.w, door.h);
-  } else if (limitDirection == "left") {
-    chooseLimit(possibilities, limitLeft);
+  } else if (borderDirection == "left") {
+    chooseBorder(possibilities, borderLeft);
+    door.x = -15
     drawDoor = () => ctxB.drawImage(exitDoorLeft, door.x, door.y, door.w, door.h);
   }
 }
 
-// Loop through each rectangle and generate a random x and y within its bounds
-
-// let randomPos = [];
-
-// for (let i = 0; i < limit.length; i++) {
-//   const lim = limit[i];
-//   const randomX = getRandom(lim.x, lim.x + lim.w);
-//   const randomY = getRandom(lim.y, lim.y + lim.h);
-
-//   // console.log(`Rectangle ${i}: limite X:(${limit.x} entre ${limit.x + limit.w}) con Random point: X:${randomX}`)
-//   // console.log(`Rectangle ${i}: limite Y:(${limit.y} entre ${limit.y + limit.h}) con Random point: Y:${randomY}`)
-
-//   randomPos.push({ randomX, randomY });
-// }
-
-// const salida = [
-//   ["izquierda", { x: -20, y: randomPos[0].randomY, w: 40, h: 40 }, { x: -20, y: randomPos[1].randomY, w: 40, h: 40 }],
-//   ["abajo", { x: randomPos[2].randomX, y: 572, w: 40, h: 40 }, { x: randomPos[3].randomX, y: 572, w: 40, h: 40 }],
-//   ["derecha", { x: 771, y: randomPos[4].randomY, w: 40, h: 40 }, { x: 771, y: randomPos[5].randomY, w: 40, h: 40 }, { x: 771, y: randomPos[6].randomY, w: 40, h: 40 }],
-//   ["arriba", { x: randomPos[7].randomX, y: 15, w: 40, h: 40 }, { x: randomPos[8].randomX, y: 15, w: 40, h: 40 }],
-// ];
-
-// console.log(salida[2][1]);
-
-// const exit = [];
-// function salidaRand(salida) {
-//   for (let i = 0; i < salida.length; i++) {
-//     exit.push(salida[i])
-//     for (let j = 1; j < salida[i].length; j++) {
-//       exit.push(salida[i][j]);
-//       return salidaRand;
-//     }
-//   }
-// }
-// console.log(exit);
-
-// const exit = [];
-// function salidaRand(salida) {
-//   for (let i = 0; i < salida.length; i++) {
-//     const exitIndex = getRandom(1, salida[i].length - 1);
-//     exit.push(salida[i][exitIndex]);
-//   }
-//   return exit;
-// }
-
-// const fourExits = salidaRand(salida);
-// console.log(fourExits);
-
-// const exitRandom = fourExits[Math.floor(Math.random() * 4)];
-
-// console.log(exitRandom);
-
-// const door = {
-//   x: exitRandom.x,
-//   y: exitRandom.y,
-
-//   print: function () {
-//     if (exitRandom === fourExits[0]) {
-//       //izquierda
-//       ctxB.drawImage(exitDoorLeft, this.x, this.y, 40, 40);
-//     }
-//     if (exitRandom === fourExits[1]) {
-//       //abajo
-//       ctxB.drawImage(exitDoorDown, this.x, this.y, 40, 40);
-//     }
-//     if (exitRandom === fourExits[2]) {
-//       // derecha
-//       ctxB.drawImage(exitDoorRight, this.x, this.y, 40, 40);
-//     }
-//     if (exitRandom === fourExits[3]) {
-//       //arriba
-//       ctxB.drawImage(exitDoorUp, this.x, this.y, 40, 42);
-//     }
-//   },
-// };
-
-// console.log("he aqui la puerta", door);
 
 function checkExitCollision() {
   if (isColliding(player, door)) {
     gameWin();
   }
 }
+
 
 // CHEAT CODES
 let cheatString = "";
