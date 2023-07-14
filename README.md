@@ -1,4 +1,6 @@
 # Phantom Runner
+Small and fun javascript game rendered on a canvas.
+
 This project was done as a team effort along with other two team members (Toni and Pedro), during an intensive 9-week Ironhack Web Development bootcamp.
 The main idea for the game was mine, my team mates liked it a lot and we started working enthusiastically. We believed A LOT in the potential.
 In this fork around 90% of the code is mine (and in the original repo I'd say aprox 70% was 100% mine haha). The visuals were supplied by the rest of the team.
