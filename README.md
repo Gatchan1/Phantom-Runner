@@ -10,3 +10,5 @@ Please check it out!
 
 # Link to the deploy: 
 https://gatchan1.github.io/phantom-runner/
+
+![Project Image](https://res.cloudinary.com/dqzjo5wsl/image/upload/v1697470836/Captura_de_pantalla_2023-10-16_173841_e5jmh6.png "Project Image")
