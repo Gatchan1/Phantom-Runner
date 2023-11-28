@@ -1,9 +1,5 @@
-
-html { 
+body { 
 background: url(../images/background-image1.png) no-repeat center center fixed; 
--webkit-background-size: cover;
--moz-background-size: cover;
--o-background-size: cover;
 background-size: cover;
 }
 
@@ -16,7 +12,6 @@ background-size: cover;
   z-index: 1;
 }
 
-
 #play-button {
   position: absolute;
   top: 300px; /* adjust to desired distance from top */
@@ -26,75 +21,29 @@ background-size: cover;
   z-index: 1;
 }
 
-/*   #reset-button {
+/* #canvas {
   position: absolute;
-  top: 380px; 
-  left: 50px; 
-  width: 200px;  
-  height: auto; 
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 1;
 } */
 
-
-
-
-
-#canvasBack {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+canvas {
+  display: block;
+  position: relative;
+  margin: 0 auto;
   z-index: 1;
 }
 
-#canvasFront {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 2;
-}
-
-canvas {
-  display: block;
-  margin: 0 auto;
-}
-
-#image {
-  height: 15px;
-  width: 15px;
-  background: 
-      url('images/BILLY_BIT.png') 0px 0px;
-}
-
-.ghost {
-  height: 30px;
-  width: 30px;
-  position: absolute;
-  z-index: 3; /* Put the ghosts on a higher z-index than both canvases */
-}
-
-
-
-
-#game-ui {
-  position: relative;
-  z-index: 2;
-}
-
-
-
 #heart-icon {
-  margin-left:40vw;
-  margin-top: -20px;
-  
+  display: flex;
+  justify-content: center;
 }
 
 .heart-life {
   width: auto;
   height: 55px;
-  padding: 5px;
-  margin-top: 25px;
 }
 
 /*   #battery-icon {

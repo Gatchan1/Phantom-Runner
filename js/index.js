@@ -1,56 +1,78 @@
-let canvasB = document.getElementById("canvasBack");
-let ctxB = canvasB.getContext("2d");
-/* let canvasF = document.getElementById("canvasFront");
-let ctxF = canvasF.getContext("2d"); */
+const game = {
+  canvas: document.getElementById("canvas"),
+  ctx: this.canvas.getContext("2d"),
+  isStarted: false,
+  intervalId: null,
+  ghosts: [],
+  // "document.createElement("img")" is exactly the same as "new Image()"
+  heartsDisplay: new Image(),
+  introduction: new Image(),
+  background: new Image(),
+  gradient: new Image(),
+  gameOverImg: new Image(),
+  gameWinImg: new Image(),
 
-let intro = document.createElement("img");
-intro.src = "./images/intro.png";
-
-window.onload = () => {
-  ctxB.drawImage(intro, 0, 0, 800, 600);
+  start: function () {
+    document.querySelector("#heart-icon").appendChild(this.heartsDisplay);
+    document.querySelector("#heart-icon>img").classList.add("heart-life");
+    this.introduction.src = "./images/intro.png";
+    this.background.src = "./images/canvas-background.png";
+    this.background.addEventListener('load', function() {
+      game.ctx.drawImage(game.introduction, 0, 0, 800, 600);
+    }, false);
+    this.gradient.src = "images/LAYER2.png";
+    this.gameOverImg.src = "./images/gameover.png";
+    this.gameWinImg.src = "./images/youdidit.png";
+    player.setSpriteSrc();
+    door.setSpriteSrc();
+  },
+  newGame: function () {
+    if (!this.isStarted) {
+      this.isStarted = true;
+      this.intervalId = setInterval(update, 60);
+      player.x = 401;
+      player.y = 290;
+      player.w = 18;
+      player.h = 23;
+      // arcX = 410;
+      // arcY = 310;
+      player.gradX = -393; //355;
+      player.gradY = -295; //255;
+      player.countGhostCollisions = 0;
+      player.direction = "standingDown";
+      this.ghosts = [];
+      for (let i = 0; i < 3; i++) {
+        this.ghosts.push(new GhostTop());
+        this.ghosts.push(new GhostRight());
+        this.ghosts.push(new GhostBottom());
+        this.ghosts.push(new GhostLeft());
+        this.ghosts.push(new GhostRightMidway());
+        this.ghosts.push(new GhostLeftMidway());
+      }
+      this.ghosts.forEach((ghost) => ghost.setSpriteSrc());
+      chooseBorderDirection();
+      chooseDoorLocation(door.borderDirection);
+    }
+  },
+  gameOver: function () {
+    this.ctx.drawImage(this.gameOverImg, 50, 105, 700, 445);
+    clearInterval(this.intervalId);
+    this.isStarted = false;
+  },
+  gameWin: function () {
+    this.ctx.drawImage(this.gameWinImg, 100, 0, 600, 600);
+    clearInterval(this.intervalId);
+    this.isStarted = false;
+  },
 };
 
-let playerSprite = document.createElement("img");
-playerSprite.src = "./images/BILLY_BIT.png";
-
-let background = document.createElement("img");
-background.src = "./images/canvas-background.png"; //"./images/main-background.png"
-
-let gradient = document.createElement("img");
-gradient.src = "images/LAYER2.png";
-
-let ghostSprite = document.createElement("img");
-ghostSprite.src = "./images/ghost1.png";
-
-let gameOverImg = document.createElement("img");
-gameOverImg.src = "./images/gameover.png";
-
-let gameWinImg = document.createElement("img");
-gameWinImg.src = "./images/youdidit.png";
-
-let exitDoorUp = document.createElement("img");
-exitDoorUp.src = "./images/EXIT.png";
-let exitDoorDown = document.createElement("img");
-exitDoorDown.src = "./images/Puerta-Abajo.png";
-let exitDoorLeft = document.createElement("img");
-exitDoorLeft.src = "./images/Puerta-Izq.png";
-let exitDoorRight = document.createElement("img");
-exitDoorRight.src = "./images/Puerta-Derecha.png";
-
-//Esto es de cuando usábamos dos canvas:
-/* ctxF.fillStyle = "black";
-ctxF.fillRect(0,0,800,600);
-
-
-// ctxF.fillStyle = "black";
-// ctxF.fillRect(0,0,800,600);
-
-// ctxF.save(); */
-
-// HEARTS DISPLAY
-let hearts = document.createElement("img");
-document.querySelector("#heart-icon").appendChild(hearts);
-document.querySelector("#heart-icon>img").classList.add("heart-life");
+window.onload = () => {
+  game.start();
+  document.getElementById("play-button").addEventListener("click", () => game.newGame());
+  // Note that putting "game.newGame" as the callback function
+  // works different than putting "() => game.newGame()".
+  // In the first case I'm unable to clearInterval.
+};
 
 const player = {
   // Initial positions:
@@ -58,15 +80,14 @@ const player = {
   y: 290,
   w: 18,
   h: 23,
-  // arcX: 410,
-  // arcY: 310,
-  gradX: -393, //355,
-  gradY: -295, //255,
-  countGhostCollisions: 0,
-
-  //Initial direction:
+  gradX: -393,
+  gradY: -295,
   direction: "standingDown",
-
+  countGhostCollisions: 0,
+  sprite: new Image(),
+  setSpriteSrc: function () {
+    this.sprite.src = "./images/BILLY_BIT.png";
+  },
   spritePositions: {
     //BILLY_BIT.png
     standingUp: { x_ini: 0, y_ini: 48 },
@@ -74,10 +95,8 @@ const player = {
       { x_ini: 16, y_ini: 48 },
       { x_ini: 32, y_ini: 48 },
     ],
-    //{x_ini: 510, y_ini: 0},
     standingRight: { x_ini: 0, y_ini: 32 },
     right: [
-      // {x_ini: 100, y_ini: 0},{x_ini: 200, y_ini: 0}
       { x_ini: 47, y_ini: 32 },
       { x_ini: 63, y_ini: 32 },
     ],
@@ -92,10 +111,9 @@ const player = {
       { x_ini: 63, y_ini: 16 },
     ],
   },
-
   checkGhostCollision: function () {
-    for (let i = 0; i < ghosts.length; i++) {
-      let ghost = ghosts[i];
+    for (let i = 0; i < game.ghosts.length; i++) {
+      let ghost = game.ghosts[i];
       if (isColliding(this, ghost)) {
         this.countGhostCollisions++;
         if (this.countGhostCollisions < 5) {
@@ -104,75 +122,79 @@ const player = {
           this.gradX = -393;
           this.gradY = -295;
         } else {
-          gameOver();
+          game.gameOver();
         }
       }
     }
   },
-
+  canMoveTo: function (newX, newY) {
+    const playerRect = {
+      x: newX,
+      y: newY,
+      w: this.w,
+      h: this.h,
+    };
+    for (const obstacle of obstacles) {
+      if (isColliding(playerRect, obstacle)) {
+        return false;
+      }
+    }
+    return true;
+  },
   recalculatePosition: function (incX, incY) {
     let newX = this.x + incX;
     let newY = this.y + incY;
 
-    if (canMoveTo(newX, newY, this.w, this.h)) {
-      if (newX >= 0 && newX <= canvasB.width - 18) {
-        // 18 is the player's width
+    if (this.canMoveTo(newX, newY)) {
+      if (newX >= 0 && newX <= canvas.width - this.w) {
         this.x = newX;
-        // this.arcX += incX;
         this.gradX += incX;
       }
-
-      if (newY >= 0 && newY <= canvasB.height - 23) {
-        // 23 is the player's height
+      if (newY >= 0 && newY <= canvas.height - this.h) {
         this.y = newY;
-        // this.arcY += incY;
         this.gradY += incY;
       }
     }
   },
-
   print: function () {
-    // ctxB.fillStyle = "red";
-    // ctxB.fillRect(this.x,this.y,this.w,this.h);
-
     if (this.direction == "standingUp") {
-      ctxB.drawImage(playerSprite, this.spritePositions.standingUp.x_ini, this.spritePositions.standingUp.y_ini, 12, 16, this.x, this.y, this.w, this.h);
+      game.ctx.drawImage(this.sprite, this.spritePositions.standingUp.x_ini, this.spritePositions.standingUp.y_ini, 12, 16, this.x, this.y, this.w, this.h);
     }
     if (this.direction == "standingRight") {
-      ctxB.drawImage(playerSprite, this.spritePositions.standingRight.x_ini, this.spritePositions.standingRight.y_ini, /* 100, 100 */ 12, 16, this.x, this.y, this.w, this.h);
+      game.ctx.drawImage(this.sprite, this.spritePositions.standingRight.x_ini, this.spritePositions.standingRight.y_ini, 12, 16, this.x, this.y, this.w, this.h);
     }
     if (this.direction == "standingDown") {
-      ctxB.drawImage(playerSprite, this.spritePositions.standingDown.x_ini, this.spritePositions.standingDown.y_ini, 12, 16, this.x, this.y, this.w, this.h);
+      game.ctx.drawImage(this.sprite, this.spritePositions.standingDown.x_ini, this.spritePositions.standingDown.y_ini, 12, 16, this.x, this.y, this.w, this.h);
     }
     if (this.direction == "standingLeft") {
-      ctxB.drawImage(playerSprite, this.spritePositions.standingLeft.x_ini, this.spritePositions.standingLeft.y_ini, 12, 16, this.x, this.y, this.w, this.h);
+      game.ctx.drawImage(this.sprite, this.spritePositions.standingLeft.x_ini, this.spritePositions.standingLeft.y_ini, 12, 16, this.x, this.y, this.w, this.h);
     }
     if (this.direction == "up") {
       if (iWalk % 2 == 0) {
-        ctxB.drawImage(playerSprite, this.spritePositions.up[0].x_ini, this.spritePositions.up[0].y_ini, 12, 16, this.x, this.y, this.w, this.h);
+        game.ctx.drawImage(this.sprite, this.spritePositions.up[0].x_ini, this.spritePositions.up[0].y_ini, 12, 16, this.x, this.y, this.w, this.h);
       } else {
-        ctxB.drawImage(playerSprite, this.spritePositions.up[1].x_ini, this.spritePositions.up[1].y_ini, 12, 16, this.x, this.y, this.w, this.h);
+        game.ctx.drawImage(this.sprite, this.spritePositions.up[1].x_ini, this.spritePositions.up[1].y_ini, 12, 16, this.x, this.y, this.w, this.h);
       }
     }
     if (this.direction == "right") {
       if (iWalk % 2 == 0) {
-        ctxB.drawImage(playerSprite, this.spritePositions.right[0].x_ini, this.spritePositions.right[0].y_ini, /* 100, 100 */ 12, 16, this.x, this.y, this.w, this.h);
+        game.ctx.drawImage(this.sprite, this.spritePositions.right[0].x_ini, this.spritePositions.right[0].y_ini, 12, 16, this.x, this.y, this.w, this.h);
       } else {
-        ctxB.drawImage(playerSprite, this.spritePositions.right[1].x_ini, this.spritePositions.right[1].y_ini, /* 100, 100 */ 12, 16, this.x, this.y, this.w, this.h);
+        game.ctx.drawImage(this.sprite, this.spritePositions.right[1].x_ini, this.spritePositions.right[1].y_ini, 12, 16, this.x, this.y, this.w, this.h);
       }
     }
     if (this.direction == "down") {
       if (iWalk % 2 == 0) {
-        ctxB.drawImage(playerSprite, this.spritePositions.down[0].x_ini, this.spritePositions.down[0].y_ini, 12, 16, this.x, this.y, this.w, this.h);
+        game.ctx.drawImage(this.sprite, this.spritePositions.down[0].x_ini, this.spritePositions.down[0].y_ini, 12, 16, this.x, this.y, this.w, this.h);
       } else {
-        ctxB.drawImage(playerSprite, this.spritePositions.down[1].x_ini, this.spritePositions.down[1].y_ini, 12, 16, this.x, this.y, this.w, this.h);
+        game.ctx.drawImage(this.sprite, this.spritePositions.down[1].x_ini, this.spritePositions.down[1].y_ini, 12, 16, this.x, this.y, this.w, this.h);
       }
     }
     if (this.direction == "left") {
       if (iWalk % 2 == 0) {
-        ctxB.drawImage(playerSprite, this.spritePositions.left[0].x_ini, this.spritePositions.left[0].y_ini, 12, 16, this.x, this.y, this.w, this.h);
+        game.ctx.drawImage(this.sprite, this.spritePositions.left[0].x_ini, this.spritePositions.left[0].y_ini, 12, 16, this.x, this.y, this.w, this.h);
       } else {
-        ctxB.drawImage(playerSprite, this.spritePositions.left[1].x_ini, this.spritePositions.left[1].y_ini, 12, 16, this.x, this.y, this.w, this.h);
+        game.ctx.drawImage(this.sprite, this.spritePositions.left[1].x_ini, this.spritePositions.left[1].y_ini, 12, 16, this.x, this.y, this.w, this.h);
       }
     }
   },
@@ -206,6 +228,7 @@ const obstacles = [
 
 function isColliding(rect1, rect2) {
   return rect1.x < rect2.x + rect2.w && rect1.x + rect1.w > rect2.x && rect1.y < rect2.y + rect2.h && rect1.y + rect1.h > rect2.y;
+  // it will only return true if all conditions are true at once.
 }
 
 function canMoveTo(newX, newY, playerWidth, playerHeight) {
@@ -215,17 +238,13 @@ function canMoveTo(newX, newY, playerWidth, playerHeight) {
     w: playerWidth,
     h: playerHeight,
   };
-
   for (const obstacle of obstacles) {
     if (isColliding(playerRect, obstacle)) {
       return false;
     }
   }
-
   return true;
 }
-
-let ghosts = [];
 
 class Ghost {
   constructor() {
@@ -235,13 +254,17 @@ class Ghost {
     this.h = 23;
     this.speedX = 2; // horizontal movement speed
     this.speedY = 1; // vertical movement speed
+    this.sprite = new Image();
+  }
+  setSpriteSrc() {
+    this.sprite.src = "./images/ghost1.png";
   }
   print() {
     // Update ghost position based on its speed
     this.x += this.speedX;
     this.y += this.speedY;
     // Draw ghost image at new position
-    ctxB.drawImage(ghostSprite, this.x, this.y, this.w, this.h);
+    game.ctx.drawImage(this.sprite, this.x, this.y, this.w, this.h);
   }
 }
 
@@ -297,15 +320,6 @@ class GhostRightMidway extends Ghost {
     this.speedY = 1;
   }
 }
-//initial ghosts
-for (let i = 0; i < 3; i++) {
-  ghosts.push(new GhostTop());
-  ghosts.push(new GhostRight());
-  ghosts.push(new GhostBottom());
-  ghosts.push(new GhostLeft());
-  ghosts.push(new GhostRightMidway());
-  ghosts.push(new GhostLeftMidway());
-}
 
 ///////////////////////////////
 /////////// INTERVAL //////////
@@ -314,107 +328,60 @@ const update = function () {
   countUpdate++;
 
   //CLEAN
-  // ctxF.restore()
-  ctxB.clearRect(0, 0, 800, 600);
-  // ctxF.clearRect(0,0,800,600);
+  game.ctx.clearRect(0, 0, 800, 600);
 
   //GENERATE GHOSTS
   if (countUpdate % 35 == 0) {
     let ghostTop = new GhostTop();
+    ghostTop.setSpriteSrc();
     let ghostLeft = new GhostLeft();
+    ghostLeft.setSpriteSrc();
     let ghostRight = new GhostRight();
+    ghostRight.setSpriteSrc();
     let ghostBottom = new GhostBottom();
-    ghosts.push(ghostTop);
-    ghosts.push(ghostLeft);
-    ghosts.push(ghostRight);
-    ghosts.push(ghostBottom);
+    ghostBottom.setSpriteSrc();
+    game.ghosts.push(ghostTop);
+    game.ghosts.push(ghostLeft);
+    game.ghosts.push(ghostRight);
+    game.ghosts.push(ghostBottom);
   }
 
   //CHECK LIFE
   if (player.countGhostCollisions == 0) {
-    hearts.src = "images/life-5.png";
+    game.heartsDisplay.src = "images/life-5.png";
   } else if (player.countGhostCollisions == 1) {
-    hearts.src = "images/life-4.png";
+    game.heartsDisplay.src = "images/life-4.png";
   } else if (player.countGhostCollisions == 2) {
-    hearts.src = "images/life-3.png";
+    game.heartsDisplay.src = "images/life-3.png";
   } else if (player.countGhostCollisions == 3) {
-    hearts.src = "images/life-2.png";
+    game.heartsDisplay.src = "images/life-2.png";
   } else {
-    hearts.src = "images/life-1.png";
+    game.heartsDisplay.src = "images/life-1.png";
   }
 
   //REDRAW
-  ctxB.drawImage(background, 0, 0, 800, 600);
+  game.ctx.drawImage(game.background, 0, 0, 800, 600);
 
-  drawDoor();
+  door.draw();
 
   player.print();
-  ghosts.forEach((ghost) => {
+  game.ghosts.forEach((ghost) => {
     ghost.print();
   });
 
-  ctxB.drawImage(gradient, player.gradX, player.gradY, 1600, 1200);
+  game.ctx.drawImage(game.gradient, player.gradX, player.gradY, 1600, 1200);
 
   player.checkGhostCollision();
   checkExitCollision();
 
   if (cheatString == "billy") {
-    gradient.src = "";
+    game.gradient.src = "";
   }
 
   if (gradientBack == "1234") {
-    gradient.src = "images/LAYER2.png";
+    game.gradient.src = "images/LAYER2.png";
   }
 };
-///////////////////////////////
-///////////////////////////////
-
-let intervalId = null;
-
-let hasStarted = false;
-let start = function () {
-  if (!hasStarted) {
-    hasStarted = true;
-    intervalId = setInterval(update, 60);
-    player.x = 401;
-    player.y = 290;
-    player.w = 18;
-    player.h = 23;
-    // arcX = 410;
-    // arcY = 310;
-    player.gradX = -393; //355;
-    player.gradY = -295; //255;
-    player.countGhostCollisions = 0;
-    player.direction = "standingDown";
-    ghosts = [];
-    for (let i = 0; i < 3; i++) {
-      ghosts.push(new GhostTop());
-      ghosts.push(new GhostRight());
-      ghosts.push(new GhostBottom());
-      ghosts.push(new GhostLeft());
-      ghosts.push(new GhostRightMidway());
-      ghosts.push(new GhostLeftMidway());
-    }
-    chooseBorderDirection();
-    chooseDoorPosition();
-    console.log("borderDirection", borderDirection);
-    console.log("doorX and doorY:", door.x, door.y);
-  }
-};
-
-document.getElementById("play-button").addEventListener("click", start);
-
-function gameOver() {
-  ctxB.drawImage(gameOverImg, 50, 105, 700, 445);
-  clearInterval(intervalId);
-  hasStarted = false;
-}
-
-function gameWin() {
-  ctxB.drawImage(gameWinImg, 100, 0, 600, 600);
-  clearInterval(intervalId);
-  hasStarted = false;
-}
 
 //////////// MOVEMENT ////////////
 let timeoutIdUp;
@@ -480,50 +447,72 @@ document.body.addEventListener("keyup", (e) => {
   }
 });
 
-
-//////////// RANDOMLY PLACED EXIT ///////////
-// Define the rectangles with their respective coordinates
-const borderUp = [ // y = 15
-  { initX: 6, endX: 180}, 
-  { initX: 259, endX: 755},
-];
-const borderRight = [ // x = 771
-  { initY: 30, endY: 145 },
-  { initY: 226, endY: 390 },
-  { initY: 476, endY: 560 },
-];
-const borderDown = [ // y = 572
-  { initX: 6, endX: 370 },
-  { initX: 432, endX: 765 },
-];
-const borderLeft = [ // x = -15
-  { initY: 30, endY: 348 },
-  { initY: 428, endY: 560 },
-];
+const door = {
+  w: 40,
+  h: 40,
+  borderDirection: null,
+  borders: {
+    // Places where the door can appear
+    top: [
+      // y = 15
+      { initX: 6, endX: 180 },
+      { initX: 259, endX: 755 },
+    ],
+    right: [
+      // x = 771
+      { initY: 30, endY: 145 },
+      { initY: 226, endY: 390 },
+      { initY: 476, endY: 560 },
+    ],
+    bottom: [
+      // y = 572
+      { initX: 6, endX: 370 },
+      { initX: 432, endX: 765 },
+    ],
+    left: [
+      // x = -15
+      { initY: 30, endY: 348 },
+      { initY: 428, endY: 560 },
+    ],
+  },
+  sprite: {
+    top: new Image(),
+    right: new Image(),
+    bottom: new Image(),
+    left: new Image(),
+  },
+  setSpriteSrc: function () {
+    this.sprite.top.src = "./images/door_up.png";
+    this.sprite.right.src = "./images/door_right.png";
+    this.sprite.bottom.src = "./images/door_down.png";
+    this.sprite.left.src = "./images/door_left.png";
+  },
+};
 
 // I want the chance of the door being in one border of the canvas proportional to the available space in pixels.
-// First I sum the pixels each border has available:
+// I'll sum the pixels each border has available:
 
-// console.log("sum upper border pixels: ", (borderUp[0].endX - borderUp[0].initX) + (borderUp[1].endX - borderUp[1].initX)) // 670
-// console.log("sum right border pixels: ", (borderRight[0].endY - borderRight[0].initY) + (borderRight[1].endY - borderRight[1].initY) + (borderRight[2].endY - borderRight[2].initY)) // 363 + 670 = 1033
-// console.log("sum bottom border pixels: ", (borderDown[0].endX - borderDown[0].initX) + (borderDown[1].endX - borderDown[1].initX)) // 697 + 1033 = 1730
-// console.log("sum left border pixels: ", (borderLeft[0].endY - borderLeft[0].initY) + (borderLeft[1].endY - borderLeft[1].initY)) // 450 + 1730 = 2180
+function sumPixels(border) {
+  return border.reduce((acc, curr) => {
+    if (curr.initX) return acc + (curr.endX - curr.initX);
+    else return acc + (curr.endY - curr.initY);
+  }, 0);
+}
 
 // Randomly determine the direction where the door will be set, taking into account the available space in pixels:
-let borderDirection;
 function chooseBorderDirection() {
-  const chancesAccordingToBorderSize = Math.floor(Math.random() * 2180);
-  if (chancesAccordingToBorderSize < 670) {
-    borderDirection = "up";
+  const chanceAccordingToBorderSize = Math.floor(Math.random() * (sumPixels(door.borders.top) + sumPixels(door.borders.right) + sumPixels(door.borders.bottom) + sumPixels(door.borders.left)));
+  if (chanceAccordingToBorderSize < sumPixels(door.borders.top)) {
+    door.borderDirection = "top";
     return;
-  } else if (chancesAccordingToBorderSize < 1033) {
-    borderDirection = "right";
+  } else if (chanceAccordingToBorderSize < sumPixels(door.borders.top) + sumPixels(door.borders.right)) {
+    door.borderDirection = "right";
     return;
-  } else if (chancesAccordingToBorderSize < 1730) {
-    borderDirection = "down";
+  } else if (chanceAccordingToBorderSize < sumPixels(door.borders.top) + sumPixels(door.borders.right) + sumPixels(door.borders.bottom)) {
+    door.borderDirection = "bottom";
     return;
-  } else if (chancesAccordingToBorderSize < 2180) {
-    borderDirection = "left";
+  } else {
+    door.borderDirection = "left";
     return;
   }
 }
@@ -533,63 +522,35 @@ function getRandom(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-const door = { w: 40, h: 40 };
-let narrowToOneDoor;
-let possibilities = [];
-let drawDoor;
-
-// Generic function to determine possible places for a door to be, within one border of the canvas.
-function chooseBorder(possibilitiesArray, direction) {
-  possibilitiesArray = [];
-  for (let i = 0; i < direction.length; i++) {
-    const fragment = direction[i];
-    let randomX
-    let randomY
-    // If it's a horizontal border:
-    if (fragment.initX) {
-      randomX = getRandom(fragment.initX, fragment.endX);
-    }
-    // If it's a vertical border:
-    if (fragment.initY) {
-      randomY = getRandom(fragment.initY, fragment.endY);
-    }
-    possibilitiesArray.push({ randomX, randomY });
-  }
-  narrowToOneDoor = possibilitiesArray[Math.floor(Math.random() * possibilitiesArray.length)];
-  console.log("doorPosition:", narrowToOneDoor);
-  if (narrowToOneDoor.randomX) {door.x = narrowToOneDoor.randomX};
-  if (narrowToOneDoor.randomY) {door.y = narrowToOneDoor.randomY};
-  console.log("door:", door);
-}
-
-function chooseDoorPosition() {
-  if (borderDirection == "up") {
-    chooseBorder(possibilities, borderUp);
+function chooseDoorLocation(direction) {
+  const fragment = Math.floor(Math.random() * door.borders[direction].length);
+  const borderFragment = door.borders[direction][fragment];
+  if (door.borderDirection == "top") {
+    door.x = getRandom(borderFragment.initX, borderFragment.endX);
+    door.y = 15;
     door.h = 42;
-    door.y = 15
-    drawDoor = () => ctxB.drawImage(exitDoorUp, door.x, door.y, door.w, door.h);
-  } else if (borderDirection == "right") {
-    chooseBorder(possibilities, borderRight);
-    door.x = 771
-    drawDoor = () => ctxB.drawImage(exitDoorRight, door.x, door.y, door.w, door.h);
-  } else if (borderDirection == "down") {
-    chooseBorder(possibilities, borderDown);
-    door.y = 572
-    drawDoor = () => ctxB.drawImage(exitDoorDown, door.x, door.y, door.w, door.h);
-  } else if (borderDirection == "left") {
-    chooseBorder(possibilities, borderLeft);
-    door.x = -15
-    drawDoor = () => ctxB.drawImage(exitDoorLeft, door.x, door.y, door.w, door.h);
+    door.draw = () => game.ctx.drawImage(door.sprite.top, door.x, door.y, door.w, door.h);
+  } else if (door.borderDirection == "right") {
+    door.x = 771;
+    door.y = getRandom(borderFragment.initY, borderFragment.endY);
+    door.draw = () => game.ctx.drawImage(door.sprite.right, door.x, door.y, door.w, door.h);
+  } else if (door.borderDirection == "bottom") {
+    door.x = getRandom(borderFragment.initX, borderFragment.endX);
+    door.y = 572;
+    door.draw = () => game.ctx.drawImage(door.sprite.bottom, door.x, door.y, door.w, door.h);
+  } else if (door.borderDirection == "left") {
+    door.x = -15;
+    door.y = getRandom(borderFragment.initY, borderFragment.endY);
+    door.draw = () => game.ctx.drawImage(door.sprite.left, door.x, door.y, door.w, door.h);
   }
+  // console.log("door direction, x, y, w, h: ", borderDirection, door.x, door.y, door.w, door.h)
 }
-
 
 function checkExitCollision() {
   if (isColliding(player, door)) {
-    gameWin();
+    game.gameWin();
   }
 }
-
 
 // CHEAT CODES
 let cheatString = "";
@@ -602,7 +563,6 @@ document.body.addEventListener("keydown", (e) => {
     cheatString += "l";
   } else if (e.key == "y" || e.key == "Y") {
     cheatString += "y";
-    // console.log("cheatString", cheatString)
   } else {
     cheatString = "";
   }
