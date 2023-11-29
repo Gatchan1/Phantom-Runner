@@ -6,14 +6,14 @@ const game = {
   count: 0,
   ghosts: [],
   cheatString: {
-    gradientOff: "",
-    gradientOn: "",
+    mistOff: "",
+    mistOn: "",
   },
   // "document.createElement("img")" is exactly the same as "new Image()"
   heartsDisplay: new Image(),
   introduction: new Image(),
   background: new Image(),
-  gradient: new Image(),
+  mist: new Image(),
   gameOverImg: new Image(),
   gameWinImg: new Image(),
 
@@ -25,7 +25,7 @@ const game = {
     this.background.addEventListener("load", function () {
       game.ctx.drawImage(game.introduction, 0, 0, 800, 600);
     });
-    this.gradient.src = "images/LAYER2.png";
+    this.mist.src = "images/mist.png";
     this.gameOverImg.src = "./images/gameover.png";
     this.gameWinImg.src = "./images/youdidit.png";
     player.setSpriteSrc();
@@ -63,6 +63,7 @@ const game = {
     this.isStarted = false;
   },
   gameWin: function () {
+    console.log("win?")
     this.ctx.drawImage(this.gameWinImg, 100, 0, 600, 600);
     clearInterval(this.intervalId);
     this.isStarted = false;
@@ -423,22 +424,23 @@ const update = function () {
   else if (player.countGhostCollisions == 2) game.heartsDisplay.src = "images/life-3.png";
   else if (player.countGhostCollisions == 3) game.heartsDisplay.src = "images/life-2.png";
   else game.heartsDisplay.src = "images/life-1.png";
-  // CHECK COLLISIONS
-  player.checkGhostCollision();
-  door.checkPlayerCollision();
   // CHECK CHEAT CODES
-  if (game.cheatString.gradientOff === "billy") {
-    game.gradient.src = "";
+  if (game.cheatString.mistOff === "billy") {
+    game.mist.src = "";
   }
-  if (game.cheatString.gradientOn === "1234") {
-    game.gradient.src = "images/LAYER2.png";
+  if (game.cheatString.mistOn === "1234") {
+    game.mist.src = "images/LAYER2.png";
   }
   // REDRAW
   game.ctx.drawImage(game.background, 0, 0, 800, 600);
   door.print();
   player.print();
   game.ghosts.forEach((ghost) => ghost.print());
-  game.ctx.drawImage(game.gradient, player.gradX, player.gradY, 1600, 1200);
+  game.ctx.drawImage(game.mist, player.gradX, player.gradY, 1600, 1200);
+  // CHECK GHOST COLLISIONS (& LOSE CONDITION)
+  player.checkGhostCollision();
+  // CHECK WIN CONDITION
+  door.checkPlayerCollision();
 };
 
 function addKeyboardEventListeners() {
@@ -469,18 +471,18 @@ function addKeyboardEventListeners() {
       player.clearAllDirectionTimeoutIds();
     }
     // CHEAT CODES
-    // gradientOff
-    if (e.key.toLowerCase() === "b") game.cheatString.gradientOff += "b";
-    else if (e.key.toLowerCase() === "i") game.cheatString.gradientOff += "i";
-    else if (e.key.toLowerCase() === "l") game.cheatString.gradientOff += "l";
-    else if (e.key.toLowerCase() === "y") game.cheatString.gradientOff += "y";
-    else game.cheatString.gradientOff = "";
-    // gradientOn
-    if (e.key === "1") game.cheatString.gradientOn += "1";
-    else if (e.key === "2") game.cheatString.gradientOn += "2";
-    else if (e.key === "3") game.cheatString.gradientOn += "3";
-    else if (e.key === "4") game.cheatString.gradientOn += "4";
-    else game.cheatString.gradientOn = "";
+    // mistOff
+    if (e.key.toLowerCase() === "b") game.cheatString.mistOff += "b";
+    else if (e.key.toLowerCase() === "i") game.cheatString.mistOff += "i";
+    else if (e.key.toLowerCase() === "l") game.cheatString.mistOff += "l";
+    else if (e.key.toLowerCase() === "y") game.cheatString.mistOff += "y";
+    else game.cheatString.mistOff = "";
+    // mistOn
+    if (e.key === "1") game.cheatString.mistOn += "1";
+    else if (e.key === "2") game.cheatString.mistOn += "2";
+    else if (e.key === "3") game.cheatString.mistOn += "3";
+    else if (e.key === "4") game.cheatString.mistOn += "4";
+    else game.cheatString.mistOn = "";
   });
   // STOP MOVEMENT
   document.body.addEventListener("keyup", (e) => {
