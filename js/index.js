@@ -19,7 +19,7 @@ const game = {
     this.background.src = "./images/canvas-background.png";
     this.background.addEventListener('load', function() {
       game.ctx.drawImage(game.introduction, 0, 0, 800, 600);
-    }, false);
+    });
     this.gradient.src = "images/LAYER2.png";
     this.gameOverImg.src = "./images/gameover.png";
     this.gameWinImg.src = "./images/youdidit.png";
@@ -156,47 +156,21 @@ const player = {
       }
     }
   },
+  printStanding: function (direction) {
+    game.ctx.drawImage(this.sprite, this.spritePositions[direction].x_ini, this.spritePositions[direction].y_ini, 12, 16, this.x, this.y, this.w, this.h);
+  },
+  printMoving: function (direction) {
+    if (this.spritePositions[direction][0]) {
+      if (iWalk % 2 === 0) {
+        game.ctx.drawImage(this.sprite, this.spritePositions[direction][0].x_ini, this.spritePositions[direction][0].y_ini, 12, 16, this.x, this.y, this.w, this.h);
+      } else {
+        game.ctx.drawImage(this.sprite, this.spritePositions[direction][1].x_ini, this.spritePositions[direction][1].y_ini, 12, 16, this.x, this.y, this.w, this.h);
+      }
+    }
+  },
   print: function () {
-    if (this.direction == "standingUp") {
-      game.ctx.drawImage(this.sprite, this.spritePositions.standingUp.x_ini, this.spritePositions.standingUp.y_ini, 12, 16, this.x, this.y, this.w, this.h);
-    }
-    if (this.direction == "standingRight") {
-      game.ctx.drawImage(this.sprite, this.spritePositions.standingRight.x_ini, this.spritePositions.standingRight.y_ini, 12, 16, this.x, this.y, this.w, this.h);
-    }
-    if (this.direction == "standingDown") {
-      game.ctx.drawImage(this.sprite, this.spritePositions.standingDown.x_ini, this.spritePositions.standingDown.y_ini, 12, 16, this.x, this.y, this.w, this.h);
-    }
-    if (this.direction == "standingLeft") {
-      game.ctx.drawImage(this.sprite, this.spritePositions.standingLeft.x_ini, this.spritePositions.standingLeft.y_ini, 12, 16, this.x, this.y, this.w, this.h);
-    }
-    if (this.direction == "up") {
-      if (iWalk % 2 == 0) {
-        game.ctx.drawImage(this.sprite, this.spritePositions.up[0].x_ini, this.spritePositions.up[0].y_ini, 12, 16, this.x, this.y, this.w, this.h);
-      } else {
-        game.ctx.drawImage(this.sprite, this.spritePositions.up[1].x_ini, this.spritePositions.up[1].y_ini, 12, 16, this.x, this.y, this.w, this.h);
-      }
-    }
-    if (this.direction == "right") {
-      if (iWalk % 2 == 0) {
-        game.ctx.drawImage(this.sprite, this.spritePositions.right[0].x_ini, this.spritePositions.right[0].y_ini, 12, 16, this.x, this.y, this.w, this.h);
-      } else {
-        game.ctx.drawImage(this.sprite, this.spritePositions.right[1].x_ini, this.spritePositions.right[1].y_ini, 12, 16, this.x, this.y, this.w, this.h);
-      }
-    }
-    if (this.direction == "down") {
-      if (iWalk % 2 == 0) {
-        game.ctx.drawImage(this.sprite, this.spritePositions.down[0].x_ini, this.spritePositions.down[0].y_ini, 12, 16, this.x, this.y, this.w, this.h);
-      } else {
-        game.ctx.drawImage(this.sprite, this.spritePositions.down[1].x_ini, this.spritePositions.down[1].y_ini, 12, 16, this.x, this.y, this.w, this.h);
-      }
-    }
-    if (this.direction == "left") {
-      if (iWalk % 2 == 0) {
-        game.ctx.drawImage(this.sprite, this.spritePositions.left[0].x_ini, this.spritePositions.left[0].y_ini, 12, 16, this.x, this.y, this.w, this.h);
-      } else {
-        game.ctx.drawImage(this.sprite, this.spritePositions.left[1].x_ini, this.spritePositions.left[1].y_ini, 12, 16, this.x, this.y, this.w, this.h);
-      }
-    }
+    if (this.direction === "standingUp" || "standingRight" || "standingDown" || "standingLeft") this.printStanding(this.direction);
+    if (this.direction === "up" || "right" || "down" || "left") this.printMoving(this.direction);
   },
 };
 
@@ -229,21 +203,6 @@ const obstacles = [
 function isColliding(rect1, rect2) {
   return rect1.x < rect2.x + rect2.w && rect1.x + rect1.w > rect2.x && rect1.y < rect2.y + rect2.h && rect1.y + rect1.h > rect2.y;
   // it will only return true if all conditions are true at once.
-}
-
-function canMoveTo(newX, newY, playerWidth, playerHeight) {
-  const playerRect = {
-    x: newX,
-    y: newY,
-    w: playerWidth,
-    h: playerHeight,
-  };
-  for (const obstacle of obstacles) {
-    if (isColliding(playerRect, obstacle)) {
-      return false;
-    }
-  }
-  return true;
 }
 
 class Ghost {
@@ -333,12 +292,12 @@ const update = function () {
   //GENERATE GHOSTS
   if (countUpdate % 35 == 0) {
     let ghostTop = new GhostTop();
-    ghostTop.setSpriteSrc();
     let ghostLeft = new GhostLeft();
-    ghostLeft.setSpriteSrc();
     let ghostRight = new GhostRight();
-    ghostRight.setSpriteSrc();
     let ghostBottom = new GhostBottom();
+    ghostTop.setSpriteSrc();
+    ghostLeft.setSpriteSrc();
+    ghostRight.setSpriteSrc();
     ghostBottom.setSpriteSrc();
     game.ghosts.push(ghostTop);
     game.ghosts.push(ghostLeft);
