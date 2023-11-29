@@ -3,7 +3,12 @@ const game = {
   ctx: this.canvas.getContext("2d"),
   isStarted: false,
   intervalId: null,
+  count: 0,
   ghosts: [],
+  cheatString: {
+    gradientOff: "",
+    gradientOn: "",
+  },
   // "document.createElement("img")" is exactly the same as "new Image()"
   heartsDisplay: new Image(),
   introduction: new Image(),
@@ -12,12 +17,12 @@ const game = {
   gameOverImg: new Image(),
   gameWinImg: new Image(),
 
-  start: function () {
+  getReady: function () {
     document.querySelector("#heart-icon").appendChild(this.heartsDisplay);
     document.querySelector("#heart-icon>img").classList.add("heart-life");
     this.introduction.src = "./images/intro.png";
     this.background.src = "./images/canvas-background.png";
-    this.background.addEventListener('load', function() {
+    this.background.addEventListener("load", function () {
       game.ctx.drawImage(game.introduction, 0, 0, 800, 600);
     });
     this.gradient.src = "images/LAYER2.png";
@@ -34,10 +39,8 @@ const game = {
       player.y = 290;
       player.w = 18;
       player.h = 23;
-      // arcX = 410;
-      // arcY = 310;
-      player.gradX = -393; //355;
-      player.gradY = -295; //255;
+      player.gradX = -393;
+      player.gradY = -295;
       player.countGhostCollisions = 0;
       player.direction = "standingDown";
       this.ghosts = [];
@@ -50,8 +53,8 @@ const game = {
         this.ghosts.push(new GhostLeftMidway());
       }
       this.ghosts.forEach((ghost) => ghost.setSpriteSrc());
-      chooseBorderDirection();
-      chooseDoorLocation(door.borderDirection);
+      door.chooseBorder();
+      door.chooseLocation(door.borderChosen);
     }
   },
   gameOver: function () {
@@ -67,7 +70,8 @@ const game = {
 };
 
 window.onload = () => {
-  game.start();
+  game.getReady();
+  addKeyboardEventListeners();
   document.getElementById("play-button").addEventListener("click", () => game.newGame());
   // Note that putting "game.newGame" as the callback function
   // works different than putting "() => game.newGame()".
@@ -83,6 +87,7 @@ const player = {
   gradX: -393,
   gradY: -295,
   direction: "standingDown",
+  stepCount: 0,
   countGhostCollisions: 0,
   sprite: new Image(),
   setSpriteSrc: function () {
@@ -111,21 +116,14 @@ const player = {
       { x_ini: 63, y_ini: 16 },
     ],
   },
-  checkGhostCollision: function () {
-    for (let i = 0; i < game.ghosts.length; i++) {
-      let ghost = game.ghosts[i];
-      if (isColliding(this, ghost)) {
-        this.countGhostCollisions++;
-        if (this.countGhostCollisions < 5) {
-          this.x = 401;
-          this.y = 290;
-          this.gradX = -393;
-          this.gradY = -295;
-        } else {
-          game.gameOver();
-        }
-      }
-    }
+  movementTimeoutIds: {
+    timeoutIdUp: null,
+    timeoutIdRight: null,
+    timeoutIdDown: null,
+    timeoutIdLeft: null,
+  },
+  clearAllDirectionTimeoutIds: function () {
+    Object.keys(this.movementTimeoutIds).forEach((key) => clearTimeout(this.movementTimeoutIds[key]));
   },
   canMoveTo: function (newX, newY) {
     const playerRect = {
@@ -161,7 +159,7 @@ const player = {
   },
   printMoving: function (direction) {
     if (this.spritePositions[direction][0]) {
-      if (iWalk % 2 === 0) {
+      if (player.stepCount % 2 === 0) {
         game.ctx.drawImage(this.sprite, this.spritePositions[direction][0].x_ini, this.spritePositions[direction][0].y_ini, 12, 16, this.x, this.y, this.w, this.h);
       } else {
         game.ctx.drawImage(this.sprite, this.spritePositions[direction][1].x_ini, this.spritePositions[direction][1].y_ini, 12, 16, this.x, this.y, this.w, this.h);
@@ -172,13 +170,126 @@ const player = {
     if (this.direction === "standingUp" || "standingRight" || "standingDown" || "standingLeft") this.printStanding(this.direction);
     if (this.direction === "up" || "right" || "down" || "left") this.printMoving(this.direction);
   },
+  checkGhostCollision: function () {
+    for (let i = 0; i < game.ghosts.length; i++) {
+      let ghost = game.ghosts[i];
+      if (isColliding(this, ghost)) {
+        this.countGhostCollisions++;
+        if (this.countGhostCollisions < 5) {
+          this.x = 401;
+          this.y = 290;
+          this.gradX = -393;
+          this.gradY = -295;
+        } else {
+          game.gameOver();
+        }
+      }
+    }
+  },
 };
 
-//COLLISION WITH OBSTACLES
+const door = {
+  x: null,
+  y: null,
+  w: 40,
+  h: 40,
+  borderChosen: null,
+  borders: {
+    // Places where the door can appear
+    top: [
+      // y = 15
+      { initX: 6, endX: 180 },
+      { initX: 259, endX: 755 },
+    ],
+    right: [
+      // x = 771
+      { initY: 30, endY: 145 },
+      { initY: 226, endY: 390 },
+      { initY: 476, endY: 560 },
+    ],
+    bottom: [
+      // y = 572
+      { initX: 6, endX: 370 },
+      { initX: 432, endX: 765 },
+    ],
+    left: [
+      // x = -15
+      { initY: 30, endY: 348 },
+      { initY: 428, endY: 560 },
+    ],
+  },
+  sprite: {
+    top: new Image(),
+    right: new Image(),
+    bottom: new Image(),
+    left: new Image(),
+  },
+  setSpriteSrc: function () {
+    this.sprite.top.src = "./images/door_up.png";
+    this.sprite.right.src = "./images/door_right.png";
+    this.sprite.bottom.src = "./images/door_down.png";
+    this.sprite.left.src = "./images/door_left.png";
+  },
+  chosenSprite: null,
+  print: function () {
+    game.ctx.drawImage(this.chosenSprite, this.x, this.y, this.w, this.h);
+  },
+  checkPlayerCollision: function () {
+    if (isColliding(player, this)) {
+      game.gameWin();
+    }
+  },
+  // I want the chance of the door being in one border of the canvas proportional to the available space in pixels.
+  getBorderSpace: function (border) {
+    return border.reduce((acc, curr) => {
+      if (curr.initX) return acc + (curr.endX - curr.initX);
+      else return acc + (curr.endY - curr.initY);
+    }, 0); // Sums the pixels each border has available.
+  },
+  // Randomly determine the direction where the door will be set, taking into account the available space in pixels:
+  chooseBorder: function () {
+    const chanceAccordingToBorderSize = Math.floor(Math.random() * (this.getBorderSpace(door.borders.top) + this.getBorderSpace(door.borders.right) + this.getBorderSpace(door.borders.bottom) + this.getBorderSpace(door.borders.left)));
+    if (chanceAccordingToBorderSize < this.getBorderSpace(door.borders.top)) {
+      door.borderChosen = "top";
+      return;
+    } else if (chanceAccordingToBorderSize < this.getBorderSpace(door.borders.top) + this.getBorderSpace(door.borders.right)) {
+      door.borderChosen = "right";
+      return;
+    } else if (chanceAccordingToBorderSize < this.getBorderSpace(door.borders.top) + this.getBorderSpace(door.borders.right) + this.getBorderSpace(door.borders.bottom)) {
+      door.borderChosen = "bottom";
+      return;
+    } else {
+      door.borderChosen = "left";
+      return;
+    }
+  },
+  chooseLocation: function (direction) {
+    const fragment = Math.floor(Math.random() * door.borders[direction].length);
+    const borderFragment = door.borders[direction][fragment];
+    if (door.borderChosen == "top") {
+      door.x = getRandom(borderFragment.initX, borderFragment.endX);
+      door.y = 15;
+      door.h = 42;
+      door.chosenSprite = door.sprite.top;
+    } else if (door.borderChosen == "right") {
+      door.x = 771;
+      door.y = getRandom(borderFragment.initY, borderFragment.endY);
+      door.chosenSprite = door.sprite.right;
+    } else if (door.borderChosen == "bottom") {
+      door.x = getRandom(borderFragment.initX, borderFragment.endX);
+      door.y = 572;
+      door.chosenSprite = door.sprite.bottom;
+    } else if (door.borderChosen == "left") {
+      door.x = -15;
+      door.y = getRandom(borderFragment.initY, borderFragment.endY);
+      door.chosenSprite = door.sprite.left;
+    }
+    // console.log("door direction, x, y, w, h: ", borderChosen, door.x, door.y, door.w, door.h)
+  },
+};
 
 const obstacles = [
   // obstacle data here:
-
   { x: 0, y: 0, w: 800, h: 32 }, //1 (todo el lado superior)
   { x: 220, y: 0, w: 40, h: 88 }, //2
   { x: 220, y: 120, w: 40, h: 149 }, //4
@@ -203,6 +314,11 @@ const obstacles = [
 function isColliding(rect1, rect2) {
   return rect1.x < rect2.x + rect2.w && rect1.x + rect1.w > rect2.x && rect1.y < rect2.y + rect2.h && rect1.y + rect1.h > rect2.y;
   // it will only return true if all conditions are true at once.
+}
+
+// Function to generate a random number within a range
+function getRandom(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 class Ghost {
@@ -282,15 +398,12 @@ class GhostRightMidway extends Ghost {
 
 ///////////////////////////////
 /////////// INTERVAL //////////
-let countUpdate = 0;
 const update = function () {
-  countUpdate++;
-
-  //CLEAN
+  game.count++;
+  // CLEAN
   game.ctx.clearRect(0, 0, 800, 600);
-
-  //GENERATE GHOSTS
-  if (countUpdate % 35 == 0) {
+  // GENERATE GHOSTS
+  if (game.count % 35 == 0) {
     let ghostTop = new GhostTop();
     let ghostLeft = new GhostLeft();
     let ghostRight = new GhostRight();
@@ -304,240 +417,92 @@ const update = function () {
     game.ghosts.push(ghostRight);
     game.ghosts.push(ghostBottom);
   }
-
-  //CHECK LIFE
-  if (player.countGhostCollisions == 0) {
-    game.heartsDisplay.src = "images/life-5.png";
-  } else if (player.countGhostCollisions == 1) {
-    game.heartsDisplay.src = "images/life-4.png";
-  } else if (player.countGhostCollisions == 2) {
-    game.heartsDisplay.src = "images/life-3.png";
-  } else if (player.countGhostCollisions == 3) {
-    game.heartsDisplay.src = "images/life-2.png";
-  } else {
-    game.heartsDisplay.src = "images/life-1.png";
-  }
-
-  //REDRAW
-  game.ctx.drawImage(game.background, 0, 0, 800, 600);
-
-  door.draw();
-
-  player.print();
-  game.ghosts.forEach((ghost) => {
-    ghost.print();
-  });
-
-  game.ctx.drawImage(game.gradient, player.gradX, player.gradY, 1600, 1200);
-
+  // CHECK LIFE
+  if (player.countGhostCollisions == 0) game.heartsDisplay.src = "images/life-5.png";
+  else if (player.countGhostCollisions == 1) game.heartsDisplay.src = "images/life-4.png";
+  else if (player.countGhostCollisions == 2) game.heartsDisplay.src = "images/life-3.png";
+  else if (player.countGhostCollisions == 3) game.heartsDisplay.src = "images/life-2.png";
+  else game.heartsDisplay.src = "images/life-1.png";
+  // CHECK COLLISIONS
   player.checkGhostCollision();
-  checkExitCollision();
-
-  if (cheatString == "billy") {
+  door.checkPlayerCollision();
+  // CHECK CHEAT CODES
+  if (game.cheatString.gradientOff === "billy") {
     game.gradient.src = "";
   }
-
-  if (gradientBack == "1234") {
+  if (game.cheatString.gradientOn === "1234") {
     game.gradient.src = "images/LAYER2.png";
   }
+  // REDRAW
+  game.ctx.drawImage(game.background, 0, 0, 800, 600);
+  door.print();
+  player.print();
+  game.ghosts.forEach((ghost) => ghost.print());
+  game.ctx.drawImage(game.gradient, player.gradX, player.gradY, 1600, 1200);
 };
 
-//////////// MOVEMENT ////////////
-let timeoutIdUp;
-let timeoutIdRight;
-let timeoutIdDown;
-let timeoutIdLeft;
-let iWalk = 0;
-
-function clearAllDirectionTimeoutIds() {
-  clearTimeout(timeoutIdUp);
-  clearTimeout(timeoutIdRight);
-  clearTimeout(timeoutIdDown);
-  clearTimeout(timeoutIdLeft);
+function addKeyboardEventListeners() {
+  document.body.addEventListener("keydown", (e) => {
+    // MOVEMENT
+    if (e.key == "ArrowUp" || e.key.toLowerCase() === "w") {
+      player.recalculatePosition(0, -20);
+      player.direction = "up";
+      player.stepCount++;
+      player.clearAllDirectionTimeoutIds();
+    }
+    if (e.key == "ArrowDown" || e.key.toLowerCase() === "s") {
+      player.recalculatePosition(0, 20);
+      player.direction = "down";
+      player.stepCount++;
+      player.clearAllDirectionTimeoutIds();
+    }
+    if (e.key == "ArrowLeft" || e.key.toLowerCase() === "a") {
+      player.recalculatePosition(-20, 0);
+      player.direction = "left";
+      player.stepCount++;
+      player.clearAllDirectionTimeoutIds();
+    }
+    if (e.key == "ArrowRight" || e.key.toLowerCase() === "d") {
+      player.recalculatePosition(20, 0);
+      player.direction = "right";
+      player.stepCount++;
+      player.clearAllDirectionTimeoutIds();
+    }
+    // CHEAT CODES
+    // gradientOff
+    if (e.key.toLowerCase() === "b") game.cheatString.gradientOff += "b";
+    else if (e.key.toLowerCase() === "i") game.cheatString.gradientOff += "i";
+    else if (e.key.toLowerCase() === "l") game.cheatString.gradientOff += "l";
+    else if (e.key.toLowerCase() === "y") game.cheatString.gradientOff += "y";
+    else game.cheatString.gradientOff = "";
+    // gradientOn
+    if (e.key === "1") game.cheatString.gradientOn += "1";
+    else if (e.key === "2") game.cheatString.gradientOn += "2";
+    else if (e.key === "3") game.cheatString.gradientOn += "3";
+    else if (e.key === "4") game.cheatString.gradientOn += "4";
+    else game.cheatString.gradientOn = "";
+  });
+  // STOP MOVEMENT
+  document.body.addEventListener("keyup", (e) => {
+    if (e.key == "ArrowUp" || e.key == "w" || e.key == "W") {
+      player.movementTimeoutIds.timeoutIdUp = setTimeout(() => {
+        player.direction = "standingUp";
+      }, 400);
+    }
+    if (e.key == "ArrowRight" || e.key == "d" || e.key == "D") {
+      player.movementTimeoutIds.timeoutIdRight = setTimeout(() => {
+        player.direction = "standingRight";
+      }, 400);
+    }
+    if (e.key == "ArrowDown" || e.key == "s" || e.key == "S") {
+      player.movementTimeoutIds.timeoutIdDown = setTimeout(() => {
+        player.direction = "standingDown";
+      }, 400);
+    }
+    if (e.key == "ArrowLeft" || e.key == "a" || e.key == "A") {
+      player.movementTimeoutIds.timeoutIdLeft = setTimeout(() => {
+        player.direction = "standingLeft";
+      }, 400);
+    }
+  });
 }
-
-document.body.addEventListener("keydown", (e) => {
-  if (e.key == "ArrowUp" || e.key == "w" || e.key == "W") {
-    player.recalculatePosition(0, -20);
-    player.direction = "up";
-    iWalk++;
-    clearAllDirectionTimeoutIds();
-  }
-  if (e.key == "ArrowDown" || e.key == "s" || e.key == "S") {
-    player.recalculatePosition(0, 20);
-    player.direction = "down";
-    iWalk++;
-    clearAllDirectionTimeoutIds();
-  }
-  if (e.key == "ArrowLeft" || e.key == "a" || e.key == "A") {
-    player.recalculatePosition(-20, 0);
-    player.direction = "left";
-    iWalk++;
-    clearAllDirectionTimeoutIds();
-  }
-  if (e.key == "ArrowRight" || e.key == "d" || e.key == "D") {
-    player.recalculatePosition(20, 0);
-    player.direction = "right";
-    iWalk++;
-    clearAllDirectionTimeoutIds();
-  }
-});
-
-document.body.addEventListener("keyup", (e) => {
-  if (e.key == "ArrowUp" || e.key == "w" || e.key == "W") {
-    timeoutIdUp = setTimeout(() => {
-      player.direction = "standingUp";
-    }, 400);
-  }
-  if (e.key == "ArrowRight" || e.key == "d" || e.key == "D") {
-    timeoutIdRight = setTimeout(() => {
-      player.direction = "standingRight";
-    }, 400);
-  }
-  if (e.key == "ArrowDown" || e.key == "s" || e.key == "S") {
-    timeoutIdDown = setTimeout(() => {
-      player.direction = "standingDown";
-    }, 400);
-  }
-  if (e.key == "ArrowLeft" || e.key == "a" || e.key == "A") {
-    timeoutIdLeft = setTimeout(() => {
-      player.direction = "standingLeft";
-    }, 400);
-  }
-});
-
-const door = {
-  w: 40,
-  h: 40,
-  borderDirection: null,
-  borders: {
-    // Places where the door can appear
-    top: [
-      // y = 15
-      { initX: 6, endX: 180 },
-      { initX: 259, endX: 755 },
-    ],
-    right: [
-      // x = 771
-      { initY: 30, endY: 145 },
-      { initY: 226, endY: 390 },
-      { initY: 476, endY: 560 },
-    ],
-    bottom: [
-      // y = 572
-      { initX: 6, endX: 370 },
-      { initX: 432, endX: 765 },
-    ],
-    left: [
-      // x = -15
-      { initY: 30, endY: 348 },
-      { initY: 428, endY: 560 },
-    ],
-  },
-  sprite: {
-    top: new Image(),
-    right: new Image(),
-    bottom: new Image(),
-    left: new Image(),
-  },
-  setSpriteSrc: function () {
-    this.sprite.top.src = "./images/door_up.png";
-    this.sprite.right.src = "./images/door_right.png";
-    this.sprite.bottom.src = "./images/door_down.png";
-    this.sprite.left.src = "./images/door_left.png";
-  },
-};
-
-// I want the chance of the door being in one border of the canvas proportional to the available space in pixels.
-// I'll sum the pixels each border has available:
-
-function sumPixels(border) {
-  return border.reduce((acc, curr) => {
-    if (curr.initX) return acc + (curr.endX - curr.initX);
-    else return acc + (curr.endY - curr.initY);
-  }, 0);
-}
-
-// Randomly determine the direction where the door will be set, taking into account the available space in pixels:
-function chooseBorderDirection() {
-  const chanceAccordingToBorderSize = Math.floor(Math.random() * (sumPixels(door.borders.top) + sumPixels(door.borders.right) + sumPixels(door.borders.bottom) + sumPixels(door.borders.left)));
-  if (chanceAccordingToBorderSize < sumPixels(door.borders.top)) {
-    door.borderDirection = "top";
-    return;
-  } else if (chanceAccordingToBorderSize < sumPixels(door.borders.top) + sumPixels(door.borders.right)) {
-    door.borderDirection = "right";
-    return;
-  } else if (chanceAccordingToBorderSize < sumPixels(door.borders.top) + sumPixels(door.borders.right) + sumPixels(door.borders.bottom)) {
-    door.borderDirection = "bottom";
-    return;
-  } else {
-    door.borderDirection = "left";
-    return;
-  }
-}
-
-// Function to generate a random number within a range
-function getRandom(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-function chooseDoorLocation(direction) {
-  const fragment = Math.floor(Math.random() * door.borders[direction].length);
-  const borderFragment = door.borders[direction][fragment];
-  if (door.borderDirection == "top") {
-    door.x = getRandom(borderFragment.initX, borderFragment.endX);
-    door.y = 15;
-    door.h = 42;
-    door.draw = () => game.ctx.drawImage(door.sprite.top, door.x, door.y, door.w, door.h);
-  } else if (door.borderDirection == "right") {
-    door.x = 771;
-    door.y = getRandom(borderFragment.initY, borderFragment.endY);
-    door.draw = () => game.ctx.drawImage(door.sprite.right, door.x, door.y, door.w, door.h);
-  } else if (door.borderDirection == "bottom") {
-    door.x = getRandom(borderFragment.initX, borderFragment.endX);
-    door.y = 572;
-    door.draw = () => game.ctx.drawImage(door.sprite.bottom, door.x, door.y, door.w, door.h);
-  } else if (door.borderDirection == "left") {
-    door.x = -15;
-    door.y = getRandom(borderFragment.initY, borderFragment.endY);
-    door.draw = () => game.ctx.drawImage(door.sprite.left, door.x, door.y, door.w, door.h);
-  }
-  // console.log("door direction, x, y, w, h: ", borderDirection, door.x, door.y, door.w, door.h)
-}
-
-function checkExitCollision() {
-  if (isColliding(player, door)) {
-    game.gameWin();
-  }
-}
-
-// CHEAT CODES
-let cheatString = "";
-document.body.addEventListener("keydown", (e) => {
-  if (e.key == "b" || e.key == "B") {
-    cheatString += "b";
-  } else if (e.key == "i" || e.key == "I") {
-    cheatString += "i";
-  } else if (e.key == "l" || e.key == "L") {
-    cheatString += "l";
-  } else if (e.key == "y" || e.key == "Y") {
-    cheatString += "y";
-  } else {
-    cheatString = "";
-  }
-});
-
-let gradientBack = "";
-document.body.addEventListener("keydown", (e) => {
-  if (e.key == "1") {
-    gradientBack += "1";
-  } else if (e.key == "2") {
-    gradientBack += "2";
-  } else if (e.key == "3") {
-    gradientBack += "3";
-  } else if (e.key == "4") {
-    gradientBack += "4";
-  } else {
-    gradientBack = "";
-  }
-});
