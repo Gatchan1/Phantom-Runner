@@ -442,7 +442,7 @@ const update = function () {
     game.mist.src = "";
   }
   if (game.cheatString.mistOn === "1234") {
-    game.mist.src = "images/LAYER2.png";
+    game.mist.src = "images/mist.png";
   }
   // REDRAW
   game.ctx.drawImage(game.background, 0, 0, game.canvasWidth, game.canvasHeight);
