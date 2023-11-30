@@ -25,6 +25,9 @@ body {
   width: calc(50px + 10vw);
   max-width: 200px;
 }
+#middle-column {
+  width: 60vw;
+}
 
 #middle-column #life-container {
   display: flex;
@@ -42,9 +45,19 @@ body {
 .heart {
   padding-left: 5px;
 }
+/* .canvas-container {
+  position: relative;
+}
+.canvas-container>img, canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.canvas-container>img {
+  width: 100%;
+} */
 
 #right-column {
-  position: relative;
   width: 19vw;
   height: 90vh;
   margin-right: 6px;
