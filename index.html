@@ -9,16 +9,31 @@
   </head>
 
   <body>
-    <div id="logo">
-      <img id="logo-img" class="race-logo" src="./images/PR_LOGO1.png" />
-      <img id="play-button" class="play-button" src="./images/start-game.png" />
+    <div class="main-container">
+      <div id="left-column">
+        <img id="logo-img" src="./images/PR_LOGO1.png" />
+        <img id="play-button" src="./images/start-game.png" />
+      </div>
+      <div id="middle-column">
+        <div id="life-container">
+          <img class="life" src="./images/life.png" />
+          <img class="heart" src="./images/heart.png" />
+          <img class="heart" src="./images/heart.png" />
+          <img class="heart" src="./images/heart.png" />
+          <img class="heart" src="./images/heart.png" />
+          <img class="heart" src="./images/heart.png" />
+        </div>
+        <canvas id="canvas"></canvas>
+      </div>
+      <div id="right-column">
+        <img class="instructions" src="./images/instruction.png" />
+      </div>
     </div>
 
-    <div id="heart-icon">
-      <img class="heart-life" src="">
-    </div>
-
-    <canvas id="canvas"></canvas>
+    <footer>
+      <p>Thanks a lot for checking out my game!</p>
+      <a href="https://github.com/Gatchan1/phantom-runner">GitHub Repo</a>
+    </footer>
 
     <script src="./js/index.js"></script>
   </body>

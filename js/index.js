@@ -3,9 +3,12 @@ console.log("window width + height", window.innerWidth, window.innerHeight);
 const game = {
   canvas: document.getElementById("canvas"),
   ctx: this.canvas.getContext("2d"),
-  canvasWidth: window.innerWidth * 0.7,
-  canvasHeight: window.innerWidth * 0.7 * 0.75,
-  canvasProportion: (window.innerWidth * 0.7) / 800, // I have to multiply every w, h, x and y by this in order to keep the proportions as they were when the canvas measured 800 x 600.
+  canvasOriginalWidth: 800,
+  canvasOriginalHeight: 600,
+  canvasWidth: window.innerWidth * 0.6,
+  canvasHeight: window.innerWidth * 0.6 * 0.75, // 0.75 is the result of dividing 600 by 800.
+  canvasProportion: (window.innerWidth * 0.6) / 800, // I have to multiply every drawn w, h, x and y by this in order to keep the proportions as they were when the canvas measured 800 x 600.
+  heartsArray: document.getElementsByClassName("heart"),
   isStarted: false,
   intervalId: null,
   count: 0,
@@ -15,7 +18,7 @@ const game = {
     mistOn: "",
   },
   // "document.createElement("img")" is exactly the same as "new Image()"
-  heartsDisplay: document.querySelector("img.heart-life"),
+  heartsDisplay: document.querySelector("img.life"),
   introduction: new Image(),
   background: new Image(),
   mist: new Image(),
@@ -64,11 +67,15 @@ const game = {
       door.chooseBorder();
       door.chooseLocation(door.borderChosen);
     }
+    for (let i = 0; i < this.heartsArray.length; i++) {
+      this.heartsArray[i].style.display = "inline";
+    }
   },
   gameOver: function () {
     this.ctx.drawImage(this.gameOverImg, 50 * this.canvasProportion, 105 * this.canvasProportion, 700 * this.canvasProportion, 445 * this.canvasProportion);
     clearInterval(this.intervalId);
     this.isStarted = false;
+    this.heartsArray[0].style.display = "none";
   },
   gameWin: function () {
     this.ctx.drawImage(this.gameWinImg, 100 * this.canvasProportion, 0 * this.canvasProportion, 600 * this.canvasProportion, 600 * this.canvasProportion);
@@ -83,7 +90,7 @@ window.onload = () => {
   document.getElementById("play-button").addEventListener("click", () => game.newGame());
   // Note that putting "game.newGame" as the callback function
   // works different than putting "() => game.newGame()".
-  // In the first case I'm unable to clearInterval.
+  // In the first case I seem to be unable to clearInterval!
 };
 
 const player = {
@@ -152,11 +159,11 @@ const player = {
     let newY = this.y + incY;
 
     if (this.canMoveTo(newX, newY)) {
-      if (newX >= 0 && newX <= canvas.width - this.w) {
+      if (newX >= 0 && newX <= game.canvasOriginalWidth - this.w) {
         this.x = newX;
         this.gradX += incX;
       }
-      if (newY >= 0 && newY <= canvas.height - this.h) {
+      if (newY >= 0 && newY <= game.canvasOriginalHeight - this.h) {
         this.y = newY;
         this.gradY += incY;
       }
@@ -426,11 +433,10 @@ const update = function () {
     game.ghosts.push(ghostBottom);
   }
   // CHECK LIFE
-  if (player.countGhostCollisions == 0) game.heartsDisplay.src = "images/life-5.png";
-  else if (player.countGhostCollisions == 1) game.heartsDisplay.src = "images/life-4.png";
-  else if (player.countGhostCollisions == 2) game.heartsDisplay.src = "images/life-3.png";
-  else if (player.countGhostCollisions == 3) game.heartsDisplay.src = "images/life-2.png";
-  else game.heartsDisplay.src = "images/life-1.png";
+  if (player.countGhostCollisions === 1) game.heartsArray[4].style.display = "none";
+  else if (player.countGhostCollisions === 2) game.heartsArray[3].style.display = "none";
+  else if (player.countGhostCollisions === 3) game.heartsArray[2].style.display = "none";
+  else if (player.countGhostCollisions === 4) game.heartsArray[1].style.display = "none";
   // CHECK CHEAT CODES
   if (game.cheatString.mistOff === "billy") {
     game.mist.src = "";
@@ -452,23 +458,25 @@ const update = function () {
 
 function addKeyboardEventListeners() {
   document.body.addEventListener("keydown", (e) => {
+    // START GAME
+    if (e.key === "Enter") game.newGame();
     // MOVEMENT
-    if (e.key == "ArrowUp" || e.key.toLowerCase() === "w") {
+    if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") {
       player.recalculatePosition(0, -20);
       player.direction = "up";
       player.stepCount++;
     }
-    if (e.key == "ArrowDown" || e.key.toLowerCase() === "s") {
+    if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") {
       player.recalculatePosition(0, 20);
       player.direction = "down";
       player.stepCount++;
     }
-    if (e.key == "ArrowLeft" || e.key.toLowerCase() === "a") {
+    if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") {
       player.recalculatePosition(-20, 0);
       player.direction = "left";
       player.stepCount++;
     }
-    if (e.key == "ArrowRight" || e.key.toLowerCase() === "d") {
+    if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") {
       player.recalculatePosition(20, 0);
       player.direction = "right";
       player.stepCount++;
@@ -516,11 +524,9 @@ function addKeyboardEventListeners() {
   });
   // RESIZE CANVAS WHEN WINDOW SIZE CHANGES
   window.addEventListener("resize", () => {
-    console.log("resize");
-    console.log("window.innerWidth", window.innerWidth)
-    game.canvasWidth = window.innerWidth * 0.7;
-    game.canvasHeight = window.innerWidth * 0.7 * 0.75;
-    game.canvasProportion = (window.innerWidth * 0.7) / 800;
+    game.canvasWidth = window.innerWidth * 0.6;
+    game.canvasHeight = window.innerWidth * 0.6 * 0.75;
+    game.canvasProportion = (window.innerWidth * 0.6) / 800;
     game.setCanvasSize();
     if (!game.isStarted) {
       game.ctx.drawImage(game.introduction, 0, 0, game.canvasWidth, game.canvasHeight);
