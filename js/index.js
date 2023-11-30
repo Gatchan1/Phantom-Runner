@@ -1,5 +1,3 @@
-console.log("window width + height", window.innerWidth, window.innerHeight);
-
 const game = {
   canvas: document.getElementById("canvas"),
   ctx: this.canvas.getContext("2d"),
@@ -33,9 +31,6 @@ const game = {
     this.setCanvasSize();
     this.introduction.src = "./images/intro.png";
     this.background.src = "./images/canvas-background.png";
-    this.background.addEventListener("load", () => {
-      this.ctx.drawImage(this.introduction, 0, 0, this.canvasWidth, this.canvasHeight);
-    });
     this.mist.src = "images/mist.png";
     this.gameOverImg.src = "./images/gameover.png";
     this.gameWinImg.src = "./images/youdidit.png";
@@ -86,6 +81,9 @@ const game = {
 
 window.onload = () => {
   game.getReady();
+  game.background.addEventListener("load", () => {
+    game.ctx.drawImage(game.introduction, 0, 0, game.canvasWidth, game.canvasHeight);
+  });
   addKeyboardEventListeners();
   document.getElementById("play-button").addEventListener("click", () => game.newGame());
   // Note that putting "game.newGame" as the callback function
