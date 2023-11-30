@@ -1,6 +1,11 @@
+console.log("window width + height", window.innerWidth, window.innerHeight);
+
 const game = {
   canvas: document.getElementById("canvas"),
   ctx: this.canvas.getContext("2d"),
+  canvasWidth: window.innerWidth * 0.7,
+  canvasHeight: window.innerWidth * 0.7 * 0.75,
+  canvasProportion: (window.innerWidth * 0.7) / 800, // I have to multiply every w, h, x and y by this in order to keep the proportions as they were when the canvas measured 800 x 600.
   isStarted: false,
   intervalId: null,
   count: 0,
@@ -10,20 +15,23 @@ const game = {
     mistOn: "",
   },
   // "document.createElement("img")" is exactly the same as "new Image()"
-  heartsDisplay: new Image(),
+  heartsDisplay: document.querySelector("img.heart-life"),
   introduction: new Image(),
   background: new Image(),
   mist: new Image(),
   gameOverImg: new Image(),
   gameWinImg: new Image(),
 
+  setCanvasSize: function () {
+    document.getElementById("canvas").setAttribute("width", this.canvasWidth);
+    document.getElementById("canvas").setAttribute("height", this.canvasHeight);
+  },
   getReady: function () {
-    document.querySelector("#heart-icon").appendChild(this.heartsDisplay);
-    document.querySelector("#heart-icon>img").classList.add("heart-life");
+    this.setCanvasSize();
     this.introduction.src = "./images/intro.png";
     this.background.src = "./images/canvas-background.png";
-    this.background.addEventListener("load", function () {
-      game.ctx.drawImage(game.introduction, 0, 0, 800, 600);
+    this.background.addEventListener("load", () => {
+      this.ctx.drawImage(this.introduction, 0, 0, this.canvasWidth, this.canvasHeight);
     });
     this.mist.src = "images/mist.png";
     this.gameOverImg.src = "./images/gameover.png";
@@ -58,13 +66,12 @@ const game = {
     }
   },
   gameOver: function () {
-    this.ctx.drawImage(this.gameOverImg, 50, 105, 700, 445);
+    this.ctx.drawImage(this.gameOverImg, 50 * this.canvasProportion, 105 * this.canvasProportion, 700 * this.canvasProportion, 445 * this.canvasProportion);
     clearInterval(this.intervalId);
     this.isStarted = false;
   },
   gameWin: function () {
-    console.log("win?")
-    this.ctx.drawImage(this.gameWinImg, 100, 0, 600, 600);
+    this.ctx.drawImage(this.gameWinImg, 100 * this.canvasProportion, 0 * this.canvasProportion, 600 * this.canvasProportion, 600 * this.canvasProportion);
     clearInterval(this.intervalId);
     this.isStarted = false;
   },
@@ -156,14 +163,14 @@ const player = {
     }
   },
   printStanding: function (direction) {
-    game.ctx.drawImage(this.sprite, this.spritePositions[direction].x_ini, this.spritePositions[direction].y_ini, 12, 16, this.x, this.y, this.w, this.h);
+    game.ctx.drawImage(this.sprite, this.spritePositions[direction].x_ini, this.spritePositions[direction].y_ini, 12, 16, this.x * game.canvasProportion, this.y * game.canvasProportion, this.w * game.canvasProportion, this.h * game.canvasProportion);
   },
   printMoving: function (direction) {
     if (this.spritePositions[direction][0]) {
       if (player.stepCount % 2 === 0) {
-        game.ctx.drawImage(this.sprite, this.spritePositions[direction][0].x_ini, this.spritePositions[direction][0].y_ini, 12, 16, this.x, this.y, this.w, this.h);
+        game.ctx.drawImage(this.sprite, this.spritePositions[direction][0].x_ini, this.spritePositions[direction][0].y_ini, 12, 16, this.x * game.canvasProportion, this.y * game.canvasProportion, this.w * game.canvasProportion, this.h * game.canvasProportion);
       } else {
-        game.ctx.drawImage(this.sprite, this.spritePositions[direction][1].x_ini, this.spritePositions[direction][1].y_ini, 12, 16, this.x, this.y, this.w, this.h);
+        game.ctx.drawImage(this.sprite, this.spritePositions[direction][1].x_ini, this.spritePositions[direction][1].y_ini, 12, 16, this.x * game.canvasProportion, this.y * game.canvasProportion, this.w * game.canvasProportion, this.h * game.canvasProportion);
       }
     }
   },
@@ -196,7 +203,7 @@ const door = {
   h: 40,
   borderChosen: null,
   borders: {
-    // Places where the door can appear
+    // Places where the door can appear. Assuming a canvas of 800 * 600px.
     top: [
       // y = 15
       { initX: 6, endX: 180 },
@@ -233,7 +240,7 @@ const door = {
   },
   chosenSprite: null,
   print: function () {
-    game.ctx.drawImage(this.chosenSprite, this.x, this.y, this.w, this.h);
+    game.ctx.drawImage(this.chosenSprite, this.x * game.canvasProportion, this.y * game.canvasProportion, this.w * game.canvasProportion, this.h * game.canvasProportion);
   },
   checkPlayerCollision: function () {
     if (isColliding(player, this)) {
@@ -340,7 +347,7 @@ class Ghost {
     this.x += this.speedX;
     this.y += this.speedY;
     // Draw ghost image at new position
-    game.ctx.drawImage(this.sprite, this.x, this.y, this.w, this.h);
+    game.ctx.drawImage(this.sprite, this.x * game.canvasProportion, this.y * game.canvasProportion, this.w * game.canvasProportion, this.h * game.canvasProportion);
   }
 }
 
@@ -402,7 +409,7 @@ class GhostRightMidway extends Ghost {
 const update = function () {
   game.count++;
   // CLEAN
-  game.ctx.clearRect(0, 0, 800, 600);
+  game.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
   // GENERATE GHOSTS
   if (game.count % 35 == 0) {
     let ghostTop = new GhostTop();
@@ -432,11 +439,11 @@ const update = function () {
     game.mist.src = "images/LAYER2.png";
   }
   // REDRAW
-  game.ctx.drawImage(game.background, 0, 0, 800, 600);
+  game.ctx.drawImage(game.background, 0, 0, game.canvasWidth, game.canvasHeight);
   door.print();
   player.print();
   game.ghosts.forEach((ghost) => ghost.print());
-  game.ctx.drawImage(game.mist, player.gradX, player.gradY, 1600, 1200);
+  game.ctx.drawImage(game.mist, player.gradX * game.canvasProportion, player.gradY * game.canvasProportion, 1600 * game.canvasProportion, 1200 * game.canvasProportion);
   // CHECK GHOST COLLISIONS (& LOSE CONDITION)
   player.checkGhostCollision();
   // CHECK WIN CONDITION
@@ -450,25 +457,21 @@ function addKeyboardEventListeners() {
       player.recalculatePosition(0, -20);
       player.direction = "up";
       player.stepCount++;
-      player.clearAllDirectionTimeoutIds();
     }
     if (e.key == "ArrowDown" || e.key.toLowerCase() === "s") {
       player.recalculatePosition(0, 20);
       player.direction = "down";
       player.stepCount++;
-      player.clearAllDirectionTimeoutIds();
     }
     if (e.key == "ArrowLeft" || e.key.toLowerCase() === "a") {
       player.recalculatePosition(-20, 0);
       player.direction = "left";
       player.stepCount++;
-      player.clearAllDirectionTimeoutIds();
     }
     if (e.key == "ArrowRight" || e.key.toLowerCase() === "d") {
       player.recalculatePosition(20, 0);
       player.direction = "right";
       player.stepCount++;
-      player.clearAllDirectionTimeoutIds();
     }
     // CHEAT CODES
     // mistOff
@@ -486,25 +489,41 @@ function addKeyboardEventListeners() {
   });
   // STOP MOVEMENT
   document.body.addEventListener("keyup", (e) => {
-    if (e.key == "ArrowUp" || e.key == "w" || e.key == "W") {
+    if (e.key == "ArrowUp" || e.key.toLowerCase() === "w") {
+      player.clearAllDirectionTimeoutIds();
       player.movementTimeoutIds.timeoutIdUp = setTimeout(() => {
         player.direction = "standingUp";
       }, 400);
     }
-    if (e.key == "ArrowRight" || e.key == "d" || e.key == "D") {
+    if (e.key == "ArrowRight" || e.key.toLowerCase() === "d") {
+      player.clearAllDirectionTimeoutIds();
       player.movementTimeoutIds.timeoutIdRight = setTimeout(() => {
         player.direction = "standingRight";
       }, 400);
     }
-    if (e.key == "ArrowDown" || e.key == "s" || e.key == "S") {
+    if (e.key == "ArrowDown" || e.key.toLowerCase() === "s") {
+      player.clearAllDirectionTimeoutIds();
       player.movementTimeoutIds.timeoutIdDown = setTimeout(() => {
         player.direction = "standingDown";
       }, 400);
     }
-    if (e.key == "ArrowLeft" || e.key == "a" || e.key == "A") {
+    if (e.key == "ArrowLeft" || e.key.toLowerCase() === "a") {
+      player.clearAllDirectionTimeoutIds();
       player.movementTimeoutIds.timeoutIdLeft = setTimeout(() => {
         player.direction = "standingLeft";
       }, 400);
+    }
+  });
+  // RESIZE CANVAS WHEN WINDOW SIZE CHANGES
+  window.addEventListener("resize", () => {
+    console.log("resize");
+    console.log("window.innerWidth", window.innerWidth)
+    game.canvasWidth = window.innerWidth * 0.7;
+    game.canvasHeight = window.innerWidth * 0.7 * 0.75;
+    game.canvasProportion = (window.innerWidth * 0.7) / 800;
+    game.setCanvasSize();
+    if (!game.isStarted) {
+      game.ctx.drawImage(game.introduction, 0, 0, game.canvasWidth, game.canvasHeight);
     }
   });
 }
