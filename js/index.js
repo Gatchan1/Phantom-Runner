@@ -30,6 +30,9 @@ const game = {
   getReady: function () {
     this.setCanvasSize();
     this.introduction.src = "./images/intro.png";
+    this.background.addEventListener("load", () => {
+      this.ctx.drawImage(this.introduction, 0, 0, this.canvasWidth, this.canvasHeight);
+    });
     this.background.src = "./images/canvas-background.png";
     this.mist.src = "images/mist.png";
     this.gameOverImg.src = "./images/gameover.png";
@@ -81,9 +84,6 @@ const game = {
 
 window.onload = () => {
   game.getReady();
-  game.background.addEventListener("load", () => {
-    game.ctx.drawImage(game.introduction, 0, 0, game.canvasWidth, game.canvasHeight);
-  });
   addKeyboardEventListeners();
   document.getElementById("play-button").addEventListener("click", () => game.newGame());
   // Note that putting "game.newGame" as the callback function
