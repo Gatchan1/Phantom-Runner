@@ -45,17 +45,6 @@ body {
 .heart {
   padding-left: 5px;
 }
-/* .canvas-container {
-  position: relative;
-}
-.canvas-container>img, canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-.canvas-container>img {
-  width: 100%;
-} */
 
 #right-column {
   width: 19vw;
